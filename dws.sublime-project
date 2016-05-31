@@ -16,8 +16,8 @@
 		{
 			"env":
 			{
-				"GOPATH": "/home/fassl/checkouts/dws/server/src/dws/server",
-				"GOBIN":  "${project_path}/home/fassl/checkouts/dws/server/bin"
+				"GOPATH": "/home/fassl/checkouts/dws/go",
+				"GOBIN":  "/home/fassl/checkouts/dws/go/bin"
 			},
 		},
 	},
