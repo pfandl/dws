@@ -1,6 +1,7 @@
 package dws_lxc
 
 import (
+	"dws/global"
 	"gopkg.in/lxc/go-lxc.v2"
 	"os/exec"
 	"strings"
@@ -67,11 +68,15 @@ func GetTemplates() ([]string, error) {
 		}
 	}
 	if cmd == nil {
-		return nil, ErrNoTemplatesInstalled
+		return nil, dws_global.ErrLxcNoTemplatesInstalled
 	}
 	out, err := exec.Command(*cmd, *arg...).Output()
 	if err != nil {
 		return nil, err
 	}
-	return strings.Split(string(out), "\n"), nil
+	res := strings.Split(string(out), "\n")
+	if len(res) == 0 {
+		return nil, dws_global.ErrLxcNoTemplatesFound
+	}
+	return res, nil
 }
