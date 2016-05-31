@@ -3,7 +3,6 @@ package dws_config
 import (
 	"dws/global"
 	//"bytes"
-	"encoding/json"
 	"encoding/xml"
 	//"io"
 	"fmt"
@@ -33,7 +32,7 @@ var (
 		Temporary:  "temporary",
 	}
 	IpV4RegExp = regexp.MustCompile("^(\\d{1,3}\\.){3}\\d{1,3}$")
-	MacRegExp  = regexp.MustCompile("^([a-fA-F0-9]{2}:){5}[a-zA-Z0-9]{2}$")
+	MacRegExp  = regexp.MustCompile("^([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}$")
 	UtsRegExp  = regexp.MustCompile("^(([a-zA-Z0-9\\-_])+\\.)*([a-zA-Z0-9\\-_])+\\.([a-zA-Z])+$")
 	Settings   = Config{}
 )
@@ -168,12 +167,11 @@ func IsSaneHost(h *Host, n *Network) error {
 	return nil
 }
 
-func GetNetworks() (string, error) {
+func GetNetworks() (interface{}, error) {
 	if len(Settings.Networks) == 0 {
-		return "", dws_global.ErrConfigNetworkNoneAvailable
+		return nil, dws_global.ErrConfigNetworkNoneAvailable
 	}
-	res, err := json.Marshal(Settings.Networks)
-	return string(res), err
+	return (Settings.Networks), nil
 }
 
 func GetHosts(n string) ([]string, error) {

@@ -8,11 +8,10 @@ import (
 )
 
 type VirtualMachine struct {
-	Container   *lxc.Container
-	IpV4Address string
-	IpV6Address string
-	MacAddress  string
-	UtsName     string
+	Container      *lxc.Container
+	IpV4Address    string
+	IpV4MacAddress string
+	UtsName        string
 }
 
 type RepoQuery struct {

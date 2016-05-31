@@ -1,6 +1,9 @@
 package dws_global
 
 var (
+	// General errors
+	ErrCannotConvertData = NewError("could not convert data to byte array")
+
 	// Configuration network errors
 	ErrConfigNetworkNoneAvailable     = NewError("no networks configured")
 	ErrConfigNetworkNameEmpty         = NewError("no network name given")
