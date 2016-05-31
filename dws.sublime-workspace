@@ -1,0 +1,664 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"ke",
+				"Key"
+			],
+			[
+				"DEBU",
+				"DEBUG_INFO"
+			],
+			[
+				"DE",
+				"DEBUG_INFO"
+			],
+			[
+				"Key",
+				"KeySize"
+			],
+			[
+				"DEBUG_",
+				"DEBUG_VERBOSE"
+			],
+			[
+				"Mem",
+				"MemoryType"
+			],
+			[
+				"EFI",
+				"EFI_CONSOLE_CONTROL_PROTOCOL"
+			],
+			[
+				"CONSO",
+				"CONSOLE_CONTROL_PRIVATE_DATA_SIGNATURE"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "PREREQUISITES.md",
+			"settings":
+			{
+				"buffer_size": 189,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "dws.sublime-project",
+			"settings":
+			{
+				"buffer_size": 298,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "Packages/Golang Build/Go.sublime-build",
+	"build_system_choices":
+	[
+		[
+			[
+				[
+					"Packages/Golang Build/Go.sublime-build",
+					""
+				],
+				[
+					"Packages/Golang Build/Go.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/Golang Build/Go.sublime-build",
+					"Test"
+				],
+				[
+					"Packages/Golang Build/Go.sublime-build",
+					"Install"
+				],
+				[
+					"Packages/Golang Build/Go.sublime-build",
+					"Cross-Compile (Interactive)"
+				],
+				[
+					"Packages/Golang Build/Go.sublime-build",
+					"Clean"
+				]
+			],
+			[
+				"Packages/Golang Build/Go.sublime-build",
+				""
+			]
+		]
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 500.0,
+		"last_filter": "ter",
+		"selected_items":
+		[
+			[
+				"ter",
+				"Terminal: Open"
+			],
+			[
+				"inst",
+				"Package Control: Install Package"
+			],
+			[
+				"gosublime b",
+				"GoSublime: Run build command"
+			],
+			[
+				"remov",
+				"Package Control: Remove Package"
+			],
+			[
+				"build",
+				"Build With: Go"
+			],
+			[
+				"remove",
+				"Package Control: Remove Package"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"buil",
+				"Build With: Go"
+			],
+			[
+				"build go",
+				"Build With: Go"
+			],
+			[
+				"git diff",
+				"Git: Diff All Files"
+			],
+			[
+				"termi",
+				"Terminal: Open"
+			],
+			[
+				"instal",
+				"Package Control: Install Package"
+			],
+			[
+				"gitb",
+				"Git: Blame"
+			],
+			[
+				"git stat",
+				"Git: Status"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
+			],
+			[
+				"glue",
+				"Glue - Launch"
+			]
+		],
+		"width": 735.0
+	},
+	"console":
+	{
+		"height": 414.0,
+		"history":
+		[
+			"echo bla",
+			"echo",
+			"import urllib.request,os,hashlib; h = '2915d1851351e5ee549c20394736b442' + '8bc59f460fa1548d1514676163dafc88'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)",
+			"ls"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/home/fassl/checkouts/dws",
+		"/home/fassl/checkouts/dws/server",
+		"/home/fassl/checkouts/dws/server/bin",
+		"/home/fassl/checkouts/dws/server/src",
+		"/home/fassl/checkouts/dws/server/src/dws",
+		"/home/fassl/checkouts/dws/server/src/dws/server"
+	],
+	"file_history":
+	[
+		"/home/fassl/.config/sublime-text-3/Packages/GoSublime/USAGE.md",
+		"/home/fassl/checkouts/dws/server/server.go",
+		"/home/fassl/.config/sublime-text-3/Packages/GoSublime/CHANGELOG.md",
+		"/home/fassl/checkouts/dws/env-linux.sh",
+		"/home/fassl/.config/sublime-text-3/Packages/User/GoSublime-aux.sublime-settings",
+		"/home/fassl/sublime_text_3/sublime_plugin.py",
+		"/home/fassl/.config/sublime-text-3/Installed Packages/Environment Settings.sublime-package",
+		"/home/fassl/acpi/dsdt.dsl",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Include/VariableNames.h",
+		"/home/fassl/acpi/ssdt1.dsl",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/OpenCoreOvmfPkg.dsc",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/OpenCoreOvmfPkg.fdf",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Driver/NanoPlatform/EntryPoint.c",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Module/DarwinModule/DeviceTree.c",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Driver/ConsoleControl/EntryPoint.c",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Driver/ConsoleControl/ConsoleControlInterface.h",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Module/DarwinModule/DataHubFunctions.c",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Module/DarwinModule/SetupEnvironment.c",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Protocol/PicoBootManagement/BootManagement.c",
+		"/home/fassl/checkouts/hermit/Workspace/bkp/SetupEnvironment.c",
+		"/home/fassl/checkouts/hermit/Workspace/PicoLibPkg/Include/Macros.h",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Protocol/PicoHotkey/Hotkey.c",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Include/Macros.h",
+		"/home/fassl/checkouts/hermit/Workspace/MdePkg/Include/Protocol/SimpleTextInEx.h",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Protocol/PicoHotkey/HotkeyInternal.h",
+		"/home/fassl/checkouts/hermit/Workspace/MdeModulePkg/Bus/Isa/Ps2KeyboardDxe/Ps2KbdTextIn.c",
+		"/home/fassl/checkouts/hermit/Workspace/MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitter.c",
+		"/home/fassl/checkouts/hermit/Workspace/MdeModulePkg/Bus/Isa/Ps2KeyboardDxe/Ps2Keyboard.c",
+		"/home/fassl/checkouts/hermit/Workspace/MdeModulePkg/Bus/Isa/Ps2KeyboardDxe/Ps2Keyboard.h",
+		"/home/fassl/checkouts/hermit/Workspace/OzmosisPkg/Interface/HotKeys.h",
+		"/home/fassl/checkouts/hermit/Workspace/BaseTools/Source/C/Include/Ia32/ProcessorBind.h",
+		"/home/fassl/.config/sublime-text-3/Packages/User/bh_core.sublime-settings",
+		"/home/fassl/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Driver/NanoPlatform/Platform.inf",
+		"/home/fassl/.config/sublime-text-3/Packages/User/OpenCoreOvmfPkg.sublime-build",
+		"/home/fassl/.configg",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Module/AptioModule/EntryPoint.c",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Library/PicoMiscLib/SetPlatformData.c",
+		"/home/fassl/checkouts/hermit/Workspace/PicoLibPkg/Library/PicoMiscLib/PicoMiscLib.c",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Include/Library/PicoMiscLib.h",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Library/PicoMiscLib/ConvertDataToString.c",
+		"/home/fassl/checkouts/hermit/Workspace/terminal.glue",
+		"/home/fassl/checkouts/hermit/Workspace/BaseTools/terminal.glue",
+		"/home/fassl/checkouts/hermit/Workspace/MdeModulePkg/Library/DxePrintLibPrint2Protocol/PrintLib.c",
+		"/home/fassl/checkouts/hermit/Workspace/BaseTools/Source/C/Include/X64/ProcessorBind.h",
+		"/home/fassl/checkouts/hermit/Workspace/MdePkg/Include/X64/ProcessorBind.h",
+		"/home/fassl/checkouts/hermit/Workspace/OzmosisPkg/Darwin/Darwin.c",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Driver/DataHub/DataHub.inf",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Module/AptioModule/StartImage.c",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Module/DarwinModule/DarwinInternal.h",
+		"/home/fassl/checkouts/hermit/Workspace/IntelFrameworkModulePkg/Universal/DataHubDxe/DataHub.c",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Driver/DataHub/DataHub.c",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/OpenCoreVmPkg.dsc",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/OpenCorePkg.dsc",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Driver/ConsoleControl/ConsoleControlInterfaceInternal.h",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Protocol/ConsoleControl/ConsoleControl.c",
+		"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg/Driver/ConsoleControl/ConsoleControlInterface.c",
+		"/home/fassl/checkouts/hermit/Workspace/OzmosisPkg/Protocols/ConsoleControl.c",
+		"/home/fassl/checkouts/hermit/Workspace/NetworkPkg/DnsDxe/DnsDhcp.c",
+		"/home/fassl/checkouts/hermit/Workspace/Conf/ReadMe.txt",
+		"/home/fassl/checkouts/hermit/Workspace/BaseTools/GNUmakefile",
+		"/home/fassl/checkouts/hermit/Workspace.sublime-project"
+	],
+	"find":
+	{
+		"height": 28.0
+	},
+	"find_in_files":
+	{
+		"height": 129.0,
+		"where_history":
+		[
+			"/home/fassl/checkouts/hermit/Workspace/OpenCorePkg",
+			"OpenCorePkg,<open folders>",
+			"OpenCorePkg",
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": true,
+		"find_history":
+		[
+			"quirks",
+			"Envi",
+			"DTInsertProperty",
+			"root",
+			"APPLE_EFI_BOOT_DEVICE_VARIABLE",
+			"boot",
+			"root",
+			"uuid",
+			"root-uuid",
+			"PicoSmbiosGeneratorProtocol",
+			"SetPlatformData",
+			"EFI_KEY_NOTIFY_FUNCTION",
+			"RegisterKeyNotify",
+			"KeyboardRegisterKey",
+			"RegisterKeyNotify",
+			"MemSet",
+			"PicoHotkeyInstallProtocol",
+			"OpenCore",
+			"Q4C",
+			"FCMD",
+			"DGPU",
+			"SOURCE_DEBU",
+			"SOURCE_DEBUG_ENABLE",
+			"LCD0",
+			"PEGP",
+			"pegp",
+			"OSYS",
+			"_Q10",
+			"GFX0",
+			"AptioExitBootServicesEvent",
+			"%G",
+			"PLATFORM_DATA_HEADER",
+			"Hdr.KeySize",
+			"Entry->Hdr",
+			"Entry->Hdr.KeySize",
+			"PLATFORM_DATA_HEADER",
+			"RETURN_WARN_BUFFER_TOO_SMALL",
+			"Warning Buffer Too Small",
+			"FSBFrequency",
+			"AllocateAddress",
+			"EfiLoaderData",
+			"SetPlatformData",
+			"SERIAL",
+			"Vbox",
+			"FSBFrequency",
+			"setplatformdata",
+			"%G",
+			"set",
+			"FSBFrequency",
+			"DataHub",
+			"ConsoleCo",
+			"Control",
+			"ConsoleControl",
+			"Seed",
+			"NULL"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 1,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "PREREQUISITES.md",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 189,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								112,
+								112
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
+							],
+							"open_with_edit": true,
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "dws.sublime-project",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 298,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								187,
+								187
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content"
+							],
+							"syntax": "Packages/JavaScript/JSON.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 46.0
+	},
+	"input":
+	{
+		"height": 44.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.9o:///home/fassl/.config/sublime-text-3/Packages/GoSublime":
+	{
+		"height": 726.0
+	},
+	"output.9o:///home/fassl/checkouts/dws":
+	{
+		"height": 218.0
+	},
+	"output.9o:///home/fassl/checkouts/dws/server":
+	{
+		"height": 373.0
+	},
+	"output.9o:///home/fassl/checkouts/dws/server/src/dws/server":
+	{
+		"height": 128.0
+	},
+	"output.MarGo-output":
+	{
+		"height": 140.0
+	},
+	"output.exec":
+	{
+		"height": 329.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.golang_build":
+	{
+		"height": 128.0
+	},
+	"pinned_build_system": "Packages/GoSublime/GoSublime.sublime-build",
+	"project": "dws.sublime-project",
+	"replace":
+	{
+		"height": 52.0
+	},
+	"save_all_on_build": false,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"setplatf",
+				"OpenCorePkg/Library/PicoMiscLib/SetPlatformData.c"
+			],
+			[
+				"startimage.",
+				"OpenCorePkg/Module/AptioModule/StartImage.c"
+			],
+			[
+				"consolecontrol.c",
+				"OpenCorePkg/Driver/ConsoleControl/ConsoleControlInterface.c"
+			],
+			[
+				"consolecon",
+				"OzmosisPkg/Protocols/ConsoleControl.c"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 560.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 581.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 343.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
