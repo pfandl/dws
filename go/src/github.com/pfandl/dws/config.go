@@ -1,21 +1,24 @@
 package dws
 
 import (
-	//"bytes"
 	"encoding/xml"
-	//"io"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"regexp"
-	//"strings"
+	"strconv"
 )
 
 const (
-	Production = iota
-	Backup     = iota
-	Temporary  = iota
+	ProductionNetwork = iota
+	BackupNetwork     = iota
+	TemporaryNetwork  = iota
+)
+
+const (
+	BackingStoreBtrfs = iota
 )
 
 var (
@@ -25,10 +28,13 @@ var (
 		"/etc/dws/config",
 		"/etc/default/dws",
 	}
-	Types = map[int]string{
-		Production: "production",
-		Backup:     "backup",
-		Temporary:  "temporary",
+	NetworkTypes = map[int]string{
+		ProductionNetwork: "production",
+		BackupNetwork:     "backup",
+		TemporaryNetwork:  "temporary",
+	}
+	BackingStoreTypes = map[int]string{
+		BackingStoreBtrfs: "btrfs",
 	}
 	IpV4RegExp = regexp.MustCompile("^(\\d{1,3}\\.){3}\\d{1,3}$")
 	MacRegExp  = regexp.MustCompile("^([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}$")
@@ -41,6 +47,7 @@ type IpV4 struct {
 	Address string   `xml:"address"`
 	Subnet  string   `xml:"subnet"`
 	Mac     string   `xml:"mac"`
+	Port    string   `xml:"port"`
 }
 
 type Host struct {
@@ -64,9 +71,22 @@ type Network struct {
 	Hosts   []Host   `xml:"host"`
 }
 
+type BackingStoreHost struct {
+	XMLName xml.Name `xml:"host"`
+	IpV4    IpV4     `xml:"ipv4"`
+}
+
+type BackingStore struct {
+	XMLName xml.Name         `xml:"backingstore"`
+	Host    BackingStoreHost `xml:"host"`
+	Path    string           `xml:"path"`
+	Type    string           `xml:"type"`
+}
+
 type Config struct {
-	XMLName  xml.Name  `xml:"config"`
-	Networks []Network `xml:"network"`
+	XMLName      xml.Name     `xml:"config"`
+	BackingStore BackingStore `xml:"backingstore"`
+	Networks     []Network    `xml:"network"`
 }
 
 func WriteConfig() {
@@ -108,6 +128,33 @@ func IsSaneConfig(c *Config) error {
 	if c == nil {
 		c = &Settings
 	}
+	// check backing store
+	if c.BackingStore.Host.IpV4.Address != "" &&
+		c.BackingStore.Host.IpV4.Address == "localhost" {
+		// we are the backing store, check for sane type
+		if c.BackingStore.Type == "" {
+			return ErrConfigBackingStoreTypeEmpty
+		}
+		var t string
+		for _, _t := range BackingStoreTypes {
+			if _t == c.BackingStore.Type {
+				t = _t
+				break
+			}
+		}
+		if t == "" {
+			return ErrConfigBackingStoreTypeInvalid
+		}
+		// port check
+		if c.BackingStore.Host.IpV4.Port == "" {
+			return ErrConfigBackingStorePortEmpty
+		}
+		i, err := strconv.ParseInt(c.BackingStore.Host.IpV4.Port, 10, 64)
+		if err != nil || i > math.MaxUint16 {
+			return ErrConfigBackingStorePortInvalid
+		}
+	}
+	// check networks (implies hosts)
 	for i := 0; i < len(c.Networks); i++ {
 		n := &c.Networks[i]
 		if err := IsSaneNetwork(n, c); err != nil {
@@ -158,7 +205,6 @@ func IsSaneNetwork(n *Network, c *Config) error {
 			}
 		}
 	}
-
 	return nil
 }
 
@@ -234,4 +280,19 @@ func GetHosts(n string) ([]string, error) {
 		res = append(res, network.Name)
 	}
 	return res, nil
+}
+
+func IsBackingStoreHost() bool {
+	return Settings.BackingStore.Host.IpV4.Address == "localhost"
+}
+
+func HasBackingStore() bool {
+	return Settings.BackingStore.Host.IpV4.Address != "" &&
+		Settings.BackingStore.Host.IpV4.Port != ""
+}
+
+func GetBackingStoreConnection() string {
+	return Settings.BackingStore.Host.IpV4.Address +
+		":" +
+		Settings.BackingStore.Host.IpV4.Port
 }

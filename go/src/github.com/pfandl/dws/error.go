@@ -6,6 +6,13 @@ var (
 
 	// Configuration errors
 	ErrConfigInvalid = NewError("no valid configuration found")
+
+	// Configuration backing store errors
+	ErrConfigBackingStoreTypeEmpty   = NewError("backing store type not defined")
+	ErrConfigBackingStoreTypeInvalid = NewError("backing store type unknown")
+	ErrConfigBackingStorePortEmpty   = NewError("backing store port not defined")
+	ErrConfigBackingStorePortInvalid = NewError("backing store port invalid")
+
 	// Configuration network errors
 	ErrConfigNetworkNoneAvailable     = NewError("no networks configured")
 	ErrConfigNetworkNameEmpty         = NewError("no network name given")
