@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
+	//"fmt"
 	"github.com/pfandl/dws"
 	//"dws/lxc"
 	//"gopkg.in/lxc/go-lxc.v2"
 	"encoding/json"
-	"github.com/milosgajdos83/tenus"
+	//"github.com/milosgajdos83/tenus"
 	"log"
 )
 
@@ -25,34 +25,11 @@ var (
 )
 
 func main() {
-	dws.GatherConfig()
-	log.Printf("%s", GetNetworks())
-
-	// Create a new network bridge
-	br, err := tenus.NewBridgeWithName("mybridge")
-	if err != nil {
-		log.Fatal(err)
+	if err := dws.GatherConfig(); err != nil {
+		log.Fatalf("aborting: %s", err.Error())
 	}
-
-	// Bring the bridge up
-	if err = br.SetLinkUp(); err != nil {
-		fmt.Println(err)
-	}
-
-	// Create a dummy link
-	dl, err := tenus.NewLink("mydummylink")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Add the dummy link into bridge
-	if err = br.AddSlaveIfc(dl.NetInterface()); err != nil {
-		log.Fatal(err)
-	}
-
-	// Bring the dummy link up
-	if err = dl.SetLinkUp(); err != nil {
-		fmt.Println(err)
+	if err := dws.InitNetworking(); err != nil {
+		log.Fatalf("aborting: %s", err.Error())
 	}
 }
 
@@ -80,5 +57,5 @@ func GetNetworks() interface{} {
 	if res, err := dws.GetNetworks(); err == nil {
 		return Jsonify(res, nil)
 	}
-	return Jsonify(nil, dws.ErrCannotConvertData)
+	return Jsonify(nil, dws.ErrConfigNetworkNoneAvailable)
 }

@@ -36,21 +36,32 @@ var (
 	Settings   = Config{}
 )
 
+type IpV4 struct {
+	XMLName xml.Name `xml:"ipv4"`
+	Address string   `xml:"address"`
+	Subnet  string   `xml:"subnet"`
+	Mac     string   `xml:"mac"`
+}
+
 type Host struct {
-	XMLName        xml.Name `xml:"host"`
-	Name           string   `xml:"name,attr"`
-	IpV4Address    string   `xml:"ipv4addr"`
-	IpV4MacAddress string   `xml:"macaddr"`
-	UtsName        string   `xml:"utsname"`
+	XMLName xml.Name `xml:"host"`
+	Name    string   `xml:"name,attr"`
+	IpV4    IpV4     `xml:"ipv4"`
+	UtsName string   `xml:"utsname"`
+}
+
+type Gateway struct {
+	XMLName xml.Name `xml:"gateway"`
+	IpV4    IpV4     `xml:"ipv4"`
 }
 
 type Network struct {
-	XMLName     xml.Name `xml:"network"`
-	Name        string   `xml:"name,attr"`
-	IpV4Gateway string   `xml:"gateway"`
-	IpV4Subnet  string   `xml:"subnet"`
-	Type        string   `xml:"type"`
-	Hosts       []Host   `xml:"host"`
+	XMLName xml.Name `xml:"network"`
+	Name    string   `xml:"name,attr"`
+	Gateway Gateway  `xml:"gateway"`
+	IpV4    IpV4     `xml:"ipv4"`
+	Type    string   `xml:"type"`
+	Hosts   []Host   `xml:"host"`
 }
 
 type Config struct {
@@ -80,15 +91,29 @@ func GatherConfig() error {
 			if err != nil {
 				log.Printf("could not parse config file %s (%v)", path, err)
 			} else {
-				Settings = conf
-				break
+				if err = IsSaneConfig(&conf); err == nil {
+					log.Printf("using config file from %s", path)
+					Settings = conf
+					return nil
+				} else {
+					log.Printf(err.Error())
+				}
 			}
 		}
 	}
-	return nil
+	return ErrConfigInvalid
 }
 
-func MergeConfig(c *Config) error {
+func IsSaneConfig(c *Config) error {
+	if c == nil {
+		c = &Settings
+	}
+	for i := 0; i < len(c.Networks); i++ {
+		n := &c.Networks[i]
+		if err := IsSaneNetwork(n, c); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -96,26 +121,44 @@ func IsSaneNetwork(n *Network, c *Config) error {
 	if n.Name == "" {
 		return ErrConfigNetworkNameEmpty
 	}
-	if n.IpV4Gateway == "" {
+	log.Printf("checking network %s", n.Name)
+	if n.Gateway.IpV4.Address == "" {
 		return ErrConfigNetworkIpV4GatewayEmpty
 	}
-	if n.IpV4Subnet == "" {
+	if n.IpV4.Address == "" {
+		return ErrConfigNetworkIpV4Empty
+	}
+	if n.IpV4.Subnet == "" {
 		return ErrConfigNetworkIpV4SubnetEmpty
 	}
-	if IpV4RegExp.MatchString(n.IpV4Gateway) == false {
+	if IpV4RegExp.MatchString(n.Gateway.IpV4.Address) == false {
 		return ErrConfigNetworkIpV4GatewaySyntax
 	}
-	if IpV4RegExp.MatchString(n.IpV4Subnet) == false {
+	if IpV4RegExp.MatchString(n.IpV4.Address) == false {
+		return ErrConfigNetworkIpV4Syntax
+	}
+	if IpV4RegExp.MatchString(n.IpV4.Subnet) == false {
 		return ErrConfigNetworkIpV4SubnetSyntax
 	}
 	if c != nil {
-		for _, network := range c.Networks {
+		for i := 0; i < len(c.Networks); i++ {
+			network := &c.Networks[i]
+			// skip checking against self
+			if network == n {
+				continue
+			}
 			if network.Name == n.Name {
 				return ErrConfigNetworkNameUsed
 			}
-
+			for i := 0; i < len(network.Hosts); i++ {
+				host := &network.Hosts[i]
+				if err := IsSaneHost(host, network); err != nil {
+					return err
+				}
+			}
 		}
 	}
+
 	return nil
 }
 
@@ -123,19 +166,20 @@ func IsSaneHost(h *Host, n *Network) error {
 	if h.Name == "" {
 		return ErrConfigHostNameEmpty
 	}
-	if h.IpV4Address == "" {
+	log.Printf("checking host %s", h.Name)
+	if h.IpV4.Address == "" {
 		return ErrConfigHostIpV4AddressEmpty
 	}
-	if h.IpV4MacAddress == "" {
+	if h.IpV4.Mac == "" {
 		return ErrConfigHostIpV4MacAddressEmpty
 	}
 	if h.UtsName == "" {
 		return ErrConfigHostUtsNameEmpty
 	}
-	if IpV4RegExp.MatchString(h.IpV4Address) == false {
+	if IpV4RegExp.MatchString(h.IpV4.Address) == false {
 		return ErrConfigHostIpV4AddressSyntax
 	}
-	if MacRegExp.MatchString(h.IpV4MacAddress) == false {
+	if MacRegExp.MatchString(h.IpV4.Mac) == false {
 		return ErrConfigHostIpV4MacAddressSyntax
 	}
 	if UtsRegExp.MatchString(h.UtsName) == false {
@@ -143,7 +187,12 @@ func IsSaneHost(h *Host, n *Network) error {
 	}
 	if n != nil {
 		// do not allow same host name and same uts name on one network
-		for _, host := range n.Hosts {
+		for i := 0; i < len(n.Hosts); i++ {
+			host := &n.Hosts[i]
+			// skip checking against self
+			if host == h {
+				continue
+			}
 			if h.Name == host.Name {
 				return ErrConfigHostNameUsed
 			}
@@ -155,10 +204,10 @@ func IsSaneHost(h *Host, n *Network) error {
 	// do not allow same ip and same mac address across networks
 	for _, network := range Settings.Networks {
 		for _, host := range network.Hosts {
-			if h.IpV4Address == host.IpV4Address {
+			if h.IpV4.Address == host.IpV4.Address {
 				return ErrConfigHostIpV4AddressUsed
 			}
-			if h.IpV4MacAddress == host.IpV4MacAddress {
+			if h.IpV4.Mac == host.IpV4.Mac {
 				return ErrConfigHostIpV4MacAddressUsed
 			}
 		}

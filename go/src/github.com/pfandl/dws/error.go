@@ -2,16 +2,20 @@ package dws
 
 var (
 	// General errors
-	ErrCannotConvertData = NewError("could not convert data to byte array")
+	ErrCannotConvertData = NewError("could not convert interface")
 
+	// Configuration errors
+	ErrConfigInvalid = NewError("no valid configuration found")
 	// Configuration network errors
 	ErrConfigNetworkNoneAvailable     = NewError("no networks configured")
 	ErrConfigNetworkNameEmpty         = NewError("no network name given")
 	ErrConfigNetworkNameUsed          = NewError("network name is already used")
 	ErrConfigNetworkNameNotFound      = NewError("network not found")
 	ErrConfigNetworkIpV4GatewayEmpty  = NewError("no ipv4 gateway for network given")
+	ErrConfigNetworkIpV4Empty         = NewError("no ipv4 address for network given")
 	ErrConfigNetworkIpV4SubnetEmpty   = NewError("no ipv4 subnet for network given")
 	ErrConfigNetworkIpV4GatewaySyntax = NewError("ipv4 gateway for network is not a valid address")
+	ErrConfigNetworkIpV4Syntax        = NewError("ipv4 address for network is not valid")
 	ErrConfigNetworkIpV4SubnetSyntax  = NewError("ipv4 subnet for network is not a valid address")
 	ErrConfigNetworkTypeInvalid       = NewError("network type invalid")
 
@@ -29,6 +33,10 @@ var (
 	ErrConfigHostUtsNameEmpty         = NewError("no utsname for host given")
 	ErrConfigHostUtsNameSyntax        = NewError("uts name for host is not valid")
 	ErrConfigHostUtsNameUsed          = NewError("host uts name is already used")
+
+	// Networking errors
+	ErrNetlinkCannotParseIpAddress        = NewError("cannot parse ip address")
+	ErrNetlinkCannotParseGatewayIpAddress = NewError("cannot parse gateway ip address")
 
 	// LXC errors
 	ErrLxcNoTemplatesInstalled = NewError("lxc-templates not installed")
