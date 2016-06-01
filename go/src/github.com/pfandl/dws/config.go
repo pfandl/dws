@@ -71,21 +71,27 @@ type Network struct {
 	Hosts   []Host   `xml:"host"`
 }
 
-type BackingStoreHost struct {
+type TcpHost struct {
 	XMLName xml.Name `xml:"host"`
 	IpV4    IpV4     `xml:"ipv4"`
 }
 
 type BackingStore struct {
-	XMLName xml.Name         `xml:"backingstore"`
-	Host    BackingStoreHost `xml:"host"`
-	Path    string           `xml:"path"`
-	Type    string           `xml:"type"`
+	XMLName xml.Name `xml:"backingstore"`
+	Host    TcpHost  `xml:"host"`
+	Path    string   `xml:"path"`
+	Type    string   `xml:"type"`
+}
+
+type Server struct {
+	XMLName xml.Name `xml:"server"`
+	Host    TcpHost  `xml:"host"`
 }
 
 type Config struct {
 	XMLName      xml.Name     `xml:"config"`
 	BackingStore BackingStore `xml:"backingstore"`
+	Server       Server       `xml:"server"`
 	Networks     []Network    `xml:"network"`
 }
 
@@ -129,8 +135,8 @@ func IsSaneConfig(c *Config) error {
 		c = &Settings
 	}
 	// check backing store
-	if c.BackingStore.Host.IpV4.Address != "" &&
-		c.BackingStore.Host.IpV4.Address == "localhost" {
+	if c.BackingStore.Host.IpV4.Address == "" &&
+		c.BackingStore.Host.IpV4.Port != "" {
 		// we are the backing store, check for sane type
 		if c.BackingStore.Type == "" {
 			return ErrConfigBackingStoreTypeEmpty
@@ -145,14 +151,21 @@ func IsSaneConfig(c *Config) error {
 		if t == "" {
 			return ErrConfigBackingStoreTypeInvalid
 		}
-		// port check
-		if c.BackingStore.Host.IpV4.Port == "" {
-			return ErrConfigBackingStorePortEmpty
-		}
 		i, err := strconv.ParseInt(c.BackingStore.Host.IpV4.Port, 10, 64)
 		if err != nil || i > math.MaxUint16 {
 			return ErrConfigBackingStorePortInvalid
 		}
+	} else {
+		// check server
+		if c.Server.Host.IpV4.Port == "" {
+			return ErrConfigServerPortEmpty
+		} else {
+			i, err := strconv.ParseInt(c.Server.Host.IpV4.Port, 10, 64)
+			if err != nil || i > math.MaxUint16 {
+				return ErrConfigServerPortInvalid
+			}
+		}
+
 	}
 	// check networks (implies hosts)
 	for i := 0; i < len(c.Networks); i++ {
@@ -283,12 +296,19 @@ func GetHosts(n string) ([]string, error) {
 }
 
 func IsBackingStoreHost() bool {
-	return Settings.BackingStore.Host.IpV4.Address == "localhost"
+	return Settings.BackingStore.Host.IpV4.Address == "" &&
+		Settings.BackingStore.Host.IpV4.Port != ""
 }
 
 func HasBackingStore() bool {
 	return Settings.BackingStore.Host.IpV4.Address != "" &&
 		Settings.BackingStore.Host.IpV4.Port != ""
+}
+
+func GetConnection() string {
+	return Settings.Server.Host.IpV4.Address +
+		":" +
+		Settings.Server.Host.IpV4.Port
 }
 
 func GetBackingStoreConnection() string {

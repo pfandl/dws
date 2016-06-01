@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <config>
+    <backingstore>
+      <host>
+        <ipv4>
+          <port>8001</port>
+        </ipv4>
+      </host>
+      <path></path>
+      <type>btrfs</type>
+    </backingstore>
+  </config>
+</xml>

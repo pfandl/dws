@@ -13,6 +13,10 @@ var (
 	ErrConfigBackingStorePortEmpty   = NewError("backing store port not defined")
 	ErrConfigBackingStorePortInvalid = NewError("backing store port invalid")
 
+	// Configuration server errors
+	ErrConfigServerPortEmpty   = NewError("server port not defined")
+	ErrConfigServerPortInvalid = NewError("server port invalid")
+
 	// Configuration network errors
 	ErrConfigNetworkNoneAvailable     = NewError("no networks configured")
 	ErrConfigNetworkNameEmpty         = NewError("no network name given")

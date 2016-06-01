@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <config>
+    <server>
+      <host>
+        <ipv4>
+          <port>8001</port>
+        </ipv4>
+      </host>
+    </server>
+    <backingstore>
+      <host>
+        <ipv4>
+          <address>192.168.1.129</address>
+          <port>8001</port>
+        </ipv4>
+      </host>
+    </backingstore>
+  </config>
+</xml>
