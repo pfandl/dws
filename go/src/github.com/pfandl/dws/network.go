@@ -36,10 +36,10 @@ func InitNetworking() error {
 				return ErrNetlinkCannotParseGatewayIpAddress
 			}
 			subs := strings.Split(n.IpV4.Subnet, ".")
-			aa, err := strconv.ParseInt(subs[0], 16, 32)
-			bb, err := strconv.ParseInt(subs[1], 16, 32)
-			cc, err := strconv.ParseInt(subs[2], 16, 32)
-			dd, err := strconv.ParseInt(subs[3], 16, 32)
+			aa, err := strconv.ParseInt(subs[0], 10, 64)
+			bb, err := strconv.ParseInt(subs[1], 10, 64)
+			cc, err := strconv.ParseInt(subs[2], 10, 64)
+			dd, err := strconv.ParseInt(subs[3], 10, 64)
 			var ipNet net.IPNet
 			ipNet.IP = ip
 			ipNet.Mask = net.IPv4Mask(
