@@ -6,11 +6,12 @@ import (
 	"io"
 	"log"
 	"net"
+	"strings"
 )
 
 type Command struct {
 	Name    string
-	Execute func() interface{}
+	Execute func() string
 }
 
 var (
@@ -45,13 +46,13 @@ func server(ln net.Listener, ch chan string) {
 					break
 				}
 				// add part of message
-				msg += string(b)
+				msg += string(b[0:s])
 			}
 		}
 		// did we receive anything?
 		if msg != "" {
 			// write to chanel
-			ch <- msg
+			ch <- strings.Replace(msg, "\n", "", -1)
 			// reset message for next communication
 			msg = ""
 		}
@@ -102,14 +103,27 @@ func main() {
 
 		// create a read and write channel
 		ch := make(chan string)
+		var res string
 		for {
 			// start as thread
 			go server(ln, ch)
 			// wait till client sends something
 			msg := <-ch
+			known := false
+			for _, cmd := range Commands {
+				if cmd.Name == msg {
+					known = true
+					res = cmd.Execute()
+				}
+			}
+			if known == false {
+				res = "unknown command"
+			}
 			log.Printf("message %s", msg)
+
 			// write back to the client
-			ch <- "ferdisch\n"
+			ch <- res
+			res = ""
 		}
 	}
 }
@@ -128,13 +142,13 @@ func Jsonify(v interface{}, err error) string {
 		res.Succeeded = true
 		res.Result = v
 	}
-	if data, err := json.Marshal(v); err == nil {
+	if data, err := json.Marshal(res); err == nil {
 		return string(data)
 	}
 	return `{Succeeded: false, Message: "cannot convert to JSON"}`
 }
 
-func GetNetworks() interface{} {
+func GetNetworks() string {
 	if res, err := dws.GetNetworks(); err == nil {
 		return Jsonify(res, nil)
 	}
