@@ -232,7 +232,9 @@ func IsSaneNetwork(n *Network, c *Config) error {
 			if network.IpV4.Address == n.IpV4.Address {
 				return ErrConfigNetworkIpV4Used
 			}
-			// TODO: fixme
+
+			// check if network has same ip range as existing
+			// TODO: implement the real logic
 			match := 0
 			ip1 := strings.Split(network.IpV4.Address, ".")
 			ip2 := strings.Split(n.IpV4.Address, ".")
@@ -250,10 +252,11 @@ func IsSaneNetwork(n *Network, c *Config) error {
 				}
 				match++
 			}
-			if match == l {
+			if match >= l {
 				return ErrConfigNetworkIpV4Used
 			}
 
+			// check hosts
 			for i := 0; i < len(network.Hosts); i++ {
 				host := &network.Hosts[i]
 				if err := IsSaneHost(host, network); err != nil {
