@@ -3,6 +3,7 @@ package dws
 var (
 	// General errors
 	ErrCannotConvertData = NewError("could not convert interface")
+	ErrInvalidParameter  = NewError("passed argument/s is/are invalid")
 
 	// Configuration errors
 	ErrConfigInvalid = NewError("no valid configuration found")
@@ -24,10 +25,12 @@ var (
 	ErrConfigNetworkNameNotFound      = NewError("network not found")
 	ErrConfigNetworkIpV4GatewayEmpty  = NewError("no ipv4 gateway for network given")
 	ErrConfigNetworkIpV4Empty         = NewError("no ipv4 address for network given")
+	ErrConfigNetworkIpV4Used          = NewError("network ipv4 address is already used")
 	ErrConfigNetworkIpV4SubnetEmpty   = NewError("no ipv4 subnet for network given")
 	ErrConfigNetworkIpV4GatewaySyntax = NewError("ipv4 gateway for network is not a valid address")
 	ErrConfigNetworkIpV4Syntax        = NewError("ipv4 address for network is not valid")
 	ErrConfigNetworkIpV4SubnetSyntax  = NewError("ipv4 subnet for network is not a valid address")
+	ErrConfigNetworkTypeEmpty         = NewError("no network type given")
 	ErrConfigNetworkTypeInvalid       = NewError("network type invalid")
 
 	// Configuration host errors

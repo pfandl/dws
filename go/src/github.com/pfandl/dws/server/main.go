@@ -7,11 +7,12 @@ import (
 	"log"
 	"net"
 	"strings"
+	"time"
 )
 
 type Command struct {
 	Name    string
-	Execute func() string
+	Execute func([]string) string
 }
 
 var (
@@ -19,6 +20,10 @@ var (
 		{
 			Name:    "get-networks",
 			Execute: GetNetworks,
+		},
+		{
+			Name:    "add-network",
+			Execute: AddNetwork,
 		},
 	}
 	BackingStoreChannel = make(chan string)
@@ -139,14 +144,17 @@ func listenerThread(ln net.Listener) {
 		go server(ln, ch)
 		// wait till client sends something
 		msg := <-ch
+		// split into arguments
+		arg := strings.Split(msg, " ")
 
 		// check whether we now this command
 		known := false
 		for _, cmd := range Commands {
-			if cmd.Name == msg {
+			// actual command is first argument
+			if cmd.Name == arg[0] {
 				known = true
 				// execute command
-				res = cmd.Execute()
+				res = cmd.Execute(arg[1:len(arg)])
 			}
 		}
 		if known == false {
@@ -189,7 +197,8 @@ func main() {
 		}
 
 		for {
-			// do nothing
+			// sleep to not eat the cpu
+			time.Sleep(1 * time.Second)
 		}
 
 	} else {
@@ -226,9 +235,27 @@ func Jsonify(v interface{}, err error) string {
 	return `{Succeeded: false, Message: "cannot convert to JSON"}`
 }
 
-func GetNetworks() string {
+func GetNetworks([]string) string {
 	if res, err := dws.GetNetworks(); err == nil {
 		return Jsonify(res, nil)
 	}
 	return Jsonify(nil, dws.ErrConfigNetworkNoneAvailable)
+}
+
+func AddNetwork(args []string) string {
+	if len(args) != 4 {
+		return Jsonify(nil, dws.ErrInvalidParameter)
+	}
+
+	n := &dws.Network{}
+	n.Name = args[0]
+	n.IpV4.Address = args[1]
+	n.IpV4.Subnet = args[2]
+	n.Type = args[3]
+
+	if err := dws.IsSaneNetwork(n, &dws.Settings); err != nil {
+		return Jsonify(nil, err)
+	}
+
+	return Jsonify(nil, nil)
 }

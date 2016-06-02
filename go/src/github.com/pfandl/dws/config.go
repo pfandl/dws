@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -182,24 +183,42 @@ func IsSaneNetwork(n *Network, c *Config) error {
 		return ErrConfigNetworkNameEmpty
 	}
 	log.Printf("checking network %s", n.Name)
-	if n.Gateway.IpV4.Address == "" {
-		return ErrConfigNetworkIpV4GatewayEmpty
-	}
+	/*
+		if n.Gateway.IpV4.Address == "" {
+			return ErrConfigNetworkIpV4GatewayEmpty
+		}
+	*/
 	if n.IpV4.Address == "" {
 		return ErrConfigNetworkIpV4Empty
 	}
 	if n.IpV4.Subnet == "" {
 		return ErrConfigNetworkIpV4SubnetEmpty
 	}
-	if IpV4RegExp.MatchString(n.Gateway.IpV4.Address) == false {
-		return ErrConfigNetworkIpV4GatewaySyntax
-	}
+	/*
+		if IpV4RegExp.MatchString(n.Gateway.IpV4.Address) == false {
+			return ErrConfigNetworkIpV4GatewaySyntax
+		}
+	*/
 	if IpV4RegExp.MatchString(n.IpV4.Address) == false {
 		return ErrConfigNetworkIpV4Syntax
 	}
 	if IpV4RegExp.MatchString(n.IpV4.Subnet) == false {
 		return ErrConfigNetworkIpV4SubnetSyntax
 	}
+	if n.Type == "" {
+		return ErrConfigNetworkTypeEmpty
+	}
+	var t string
+	for _, _t := range NetworkTypes {
+		if _t == n.Type {
+			t = _t
+			break
+		}
+	}
+	if t == "" {
+		return ErrConfigNetworkTypeInvalid
+	}
+
 	if c != nil {
 		for i := 0; i < len(c.Networks); i++ {
 			network := &c.Networks[i]
@@ -210,6 +229,31 @@ func IsSaneNetwork(n *Network, c *Config) error {
 			if network.Name == n.Name {
 				return ErrConfigNetworkNameUsed
 			}
+			if network.IpV4.Address == n.IpV4.Address {
+				return ErrConfigNetworkIpV4Used
+			}
+			// TODO: fixme
+			match := 0
+			ip1 := strings.Split(network.IpV4.Address, ".")
+			ip2 := strings.Split(n.IpV4.Address, ".")
+			sn := strings.Split(network.IpV4.Subnet, ".")
+			var l int
+			for i := 0; i < 4; i++ {
+				if sn[i] != "255" {
+					l = i
+					break
+				}
+			}
+			for i := 0; i < l; i++ {
+				if ip1[i] != ip2[i] {
+					break
+				}
+				match++
+			}
+			if match == l {
+				return ErrConfigNetworkIpV4Used
+			}
+
 			for i := 0; i < len(network.Hosts); i++ {
 				host := &network.Hosts[i]
 				if err := IsSaneHost(host, network); err != nil {
@@ -246,6 +290,7 @@ func IsSaneHost(h *Host, n *Network) error {
 	}
 	if n != nil {
 		// do not allow same host name and same uts name on one network
+		// do not allow same ip and mac address on one network
 		for i := 0; i < len(n.Hosts); i++ {
 			host := &n.Hosts[i]
 			// skip checking against self
@@ -258,11 +303,23 @@ func IsSaneHost(h *Host, n *Network) error {
 			if h.UtsName == host.UtsName {
 				return ErrConfigHostUtsNameUsed
 			}
+			if h.IpV4.Address == host.IpV4.Address {
+				return ErrConfigHostIpV4AddressUsed
+			}
+			if h.IpV4.Mac == host.IpV4.Mac {
+				return ErrConfigHostIpV4MacAddressUsed
+			}
 		}
 	}
 	// do not allow same ip and same mac address across networks
-	for _, network := range Settings.Networks {
-		for _, host := range network.Hosts {
+	for n := 0; n < len(Settings.Networks); n++ {
+		network := &Settings.Networks[n]
+		for i := 0; i < len(network.Hosts); i++ {
+			host := &network.Hosts[i]
+			// skip checking against self
+			if host == h {
+				continue
+			}
 			if h.IpV4.Address == host.IpV4.Address {
 				return ErrConfigHostIpV4AddressUsed
 			}
