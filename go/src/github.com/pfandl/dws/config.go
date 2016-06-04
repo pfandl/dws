@@ -3,6 +3,8 @@ package dws
 import (
 	"encoding/xml"
 	"fmt"
+	"github.com/pfandl/dws/debug"
+	"github.com/pfandl/dws/module"
 	"io/ioutil"
 	"log"
 	"math"
@@ -40,7 +42,7 @@ var (
 	IpV4RegExp = regexp.MustCompile("^(\\d{1,3}\\.){3}\\d{1,3}$")
 	MacRegExp  = regexp.MustCompile("^([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}$")
 	UtsRegExp  = regexp.MustCompile("^(([a-zA-Z0-9\\-_])+\\.)*([a-zA-Z0-9\\-_])+\\.([a-zA-Z])+$")
-	Settings   = Config{}
+	Settings   = ConfigData{}
 )
 
 type IpV4 struct {
@@ -89,7 +91,7 @@ type Server struct {
 	Host    TcpHost  `xml:"host"`
 }
 
-type Config struct {
+type ConfigData struct {
 	XMLName      xml.Name     `xml:"config"`
 	BackingStore BackingStore `xml:"backingstore"`
 	Server       Server       `xml:"server"`
@@ -113,7 +115,7 @@ func GatherConfig() error {
 		if err != nil {
 			log.Printf("could not read config file from %s (%v)", path, err)
 		} else {
-			conf := Config{}
+			conf := ConfigData{}
 			err = xml.Unmarshal(data, &conf)
 			if err != nil {
 				log.Printf("could not parse config file %s (%v)", path, err)
@@ -131,7 +133,7 @@ func GatherConfig() error {
 	return ErrConfigInvalid
 }
 
-func IsSaneConfig(c *Config) error {
+func IsSaneConfig(c *ConfigData) error {
 	if c == nil {
 		c = &Settings
 	}
@@ -178,7 +180,7 @@ func IsSaneConfig(c *Config) error {
 	return nil
 }
 
-func IsSaneNetwork(n *Network, c *Config) error {
+func IsSaneNetwork(n *Network, c *ConfigData) error {
 	if n.Name == "" {
 		return ErrConfigNetworkNameEmpty
 	}
@@ -375,4 +377,72 @@ func GetBackingStoreConnection() string {
 	return Settings.BackingStore.Host.IpV4.Address +
 		":" +
 		Settings.BackingStore.Host.IpV4.Port
+}
+
+func GetBackingStoreType() string {
+	return Settings.BackingStore.Type
+}
+
+func IsBackingStoreBtrfs() bool {
+	return GetBackingStoreType() == BackingStoreTypes[BackingStoreBtrfs]
+}
+
+func GetBackingStorePath() string {
+	return Settings.BackingStore.Path
+}
+
+var (
+	// events we fire
+	ActiveEvents = []string{
+		"server-added",
+		"server-removed",
+		"backingstore-added",
+		"backingstore-removed",
+		"network-added",
+		"network-removed",
+		"host-added",
+		"host-removed",
+	}
+	// events we are interested in
+	PassiveEvents = []string{
+		"add-server",
+		"remove-server",
+		"add-backingstore",
+		"remove-backingstore",
+		"add-network",
+		"remove-network",
+		"add-host",
+		"remove-host",
+	}
+)
+
+type Config struct {
+	module.Module
+}
+
+func (c *Config) Name() string {
+	return "config"
+}
+
+func (c *Config) Events(active bool) []string {
+	debug.Ver("Config: Events %v", active)
+	if active == true {
+		return ActiveEvents
+	} else {
+		return PassiveEvents
+	}
+}
+
+func (c *Config) Init() error {
+	log.Printf("Config Init()")
+	return nil
+}
+
+func (c *Config) DisInit() error {
+	log.Printf("Config DisInit()")
+	return nil
+}
+
+func (c *Config) Event(e string, v interface{}) {
+	log.Printf("Config got event: %s %v", e, v)
 }
