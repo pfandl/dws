@@ -3,8 +3,6 @@ package dws
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/pfandl/dws/debug"
-	"github.com/pfandl/dws/module"
 	"io/ioutil"
 	"log"
 	"math"
@@ -389,60 +387,4 @@ func IsBackingStoreBtrfs() bool {
 
 func GetBackingStorePath() string {
 	return Settings.BackingStore.Path
-}
-
-var (
-	// events we fire
-	ActiveEvents = []string{
-		"server-added",
-		"server-removed",
-		"backingstore-added",
-		"backingstore-removed",
-		"network-added",
-		"network-removed",
-		"host-added",
-		"host-removed",
-	}
-	// events we are interested in
-	PassiveEvents = []string{
-		"add-server",
-		"remove-server",
-		"add-backingstore",
-		"remove-backingstore",
-		"add-network",
-		"remove-network",
-		"add-host",
-		"remove-host",
-	}
-)
-
-type Config struct {
-	module.Module
-}
-
-func (c *Config) Name() string {
-	return "config"
-}
-
-func (c *Config) Events(active bool) []string {
-	debug.Ver("Config: Events %v", active)
-	if active == true {
-		return ActiveEvents
-	} else {
-		return PassiveEvents
-	}
-}
-
-func (c *Config) Init() error {
-	log.Printf("Config Init()")
-	return nil
-}
-
-func (c *Config) DisInit() error {
-	log.Printf("Config DisInit()")
-	return nil
-}
-
-func (c *Config) Event(e string, v interface{}) {
-	log.Printf("Config got event: %s %v", e, v)
 }

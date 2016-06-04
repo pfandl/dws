@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/pfandl/dws"
+	"github.com/pfandl/dws/config"
 	"github.com/pfandl/dws/debug"
 	"github.com/pfandl/dws/event"
 	"github.com/pfandl/dws/module"
@@ -175,9 +176,16 @@ func listenerThread(ln net.Listener) {
 }
 
 func main() {
-	module.Register(&dws.Config{})
+	debug.SetLevel(debug.All)
+	module.Register(&config.Config{})
 	module.Register(&server.Server{})
 	if err := module.InitAll(); err != nil {
+		debug.Fat(err.Error())
+	}
+	if err := module.GetError("config"); err != nil {
+		debug.Fat(err.Error())
+	}
+	if err := module.GetError("server"); err != nil {
 		debug.Fat(err.Error())
 	}
 	event.SetAsynchronous(false)

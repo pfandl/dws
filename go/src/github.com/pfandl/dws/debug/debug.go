@@ -1,6 +1,8 @@
 package debug
 
-import "log"
+import (
+	"log"
+)
 
 var (
 	Level = (Information | Warning | Error | Fatal)
@@ -63,6 +65,7 @@ func Log(i int, s ...interface{}) {
 		if Level&Fatal > 0 {
 			m = "Fatal: " + msg
 		} else {
+			log.Fatalf("program cannot continue")
 			return
 		}
 		break

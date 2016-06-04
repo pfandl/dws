@@ -27,6 +27,13 @@ type Module struct {
 	Error error
 }
 
+func Get(s string) (*Module, error) {
+	if Modules[s] != nil {
+		return Modules[s], nil
+	}
+	return nil, err.New(ModuleNotFound, s)
+}
+
 func Register(m _module) error {
 	debug.Ver("Module: Register()")
 	s := m.Name()
