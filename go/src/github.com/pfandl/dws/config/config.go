@@ -49,27 +49,27 @@ type SaneConfig interface {
 type IpV4 struct {
 	SaneConfig
 	XMLName xml.Name `xml:"ipv4"`
-	Address string   `xml:"address" validation:"ipv4"`
-	Subnet  string   `xml:"subnet"  validation:"ipv4"`
-	Mac     string   `xml:"mac"     validation:"mac"`
-	Port    string   `xml:"port"    validation:"port"`
+	Address string   `xml:"address"   validation:"ipv4"`
+	Subnet  string   `xml:"subnet"    validation:"ipv4"`
+	Mac     string   `xml:"mac"       validation:"ipv4mac"`
+	Port    string   `xml:"port"      validation:"port"`
 }
 
 type Host struct {
 	SaneConfig
 	XMLName xml.Name `xml:"host"`
 	Name    string   `xml:"name,attr" validation:"!empty"`
-	IpV4    IpV4     `xml:"ipv4"`
-	UtsName string   `xml:"utsname"   validation:"!empty"`
+	IpV4    IpV4     `xml:"ipv4"      validation:"struct"         validation-ignore:"subnet,port"`
+	UtsName string   `xml:"utsname"   validation:"uts"`
 }
 
 type Network struct {
 	SaneConfig
 	XMLName xml.Name `xml:"network"`
 	Name    string   `xml:"name,attr" validation:"!empty,max=15"`
-	IpV4    IpV4     `xml:"ipv4"`
-	Type    string   `xml:"type"`
-	Hosts   []Host   `xml:"host"`
+	IpV4    IpV4     `xml:"ipv4"      validation:"struct"         validation-ignore:"mac,port"`
+	Type    string   `xml:"type"      validation:"!empty"`
+	Hosts   []Host   `xml:"host"      validation:"slice"`
 }
 
 type ConfigData struct {
@@ -138,7 +138,7 @@ func (c *Config) Init() error {
 
 		// validate data
 		debug.Info("validating data for %s", conf.Name)
-		if err := validation.Validate(*conf, ""); err != nil {
+		if err := validation.Validate(*conf, "", ""); err != nil {
 			debug.Fat(err.Error())
 		}
 

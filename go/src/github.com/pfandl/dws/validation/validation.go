@@ -3,7 +3,9 @@ package validation
 import (
 	"github.com/pfandl/dws/debug"
 	"github.com/pfandl/dws/error"
+	"math"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -17,11 +19,8 @@ var (
 	InvalidValue      = "invalid validation value"
 )
 
-func Validate(v interface{}, s string) error {
-	debug.Ver("Validate: \"%v\"", v)
-	if v == nil {
-		return nil
-	}
+func Validate(v interface{}, ig string, s string) error {
+	debug.Ver("Validate: \"%v\", ignore %s, validate %s", v, ig, s)
 	to := reflect.TypeOf(v)
 	switch to.Kind() {
 	case reflect.Bool:
@@ -52,9 +51,6 @@ func Validate(v interface{}, s string) error {
 		fallthrough
 	case reflect.String:
 		debug.Ver("Validate: \"%v\" against %s", v, s)
-		if s == "" {
-			return nil
-		}
 		for _, vs := range strings.Split(s, ",") {
 			svs := vs
 			// check if we have a negation prefix
@@ -94,6 +90,41 @@ func Validate(v interface{}, s string) error {
 					return err.New(Invalid, vs, "for", to.Kind().String())
 				}
 				res = (v == "")
+
+			case "ipv4":
+				// ipv4 address
+				if to.Kind() != reflect.String {
+					return err.New(Invalid, vs, "for", to.Kind().String())
+				}
+				r := regexp.MustCompile("^(\\d{1,3}\\.){3}\\d{1,3}$")
+				res = r.MatchString(v.(string))
+
+			case "ipv4mac":
+				// mac address
+				if to.Kind() != reflect.String {
+					return err.New(Invalid, vs, "for", to.Kind().String())
+				}
+				r := regexp.MustCompile("^([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}$")
+				res = r.MatchString(v.(string))
+
+			case "port":
+				// port
+				if to.Kind() != reflect.String {
+					return err.New(Invalid, vs, "for", to.Kind().String())
+				}
+				if r, e := strconv.ParseUint(v.(string), 10, 64); e == nil {
+					res = r < math.MaxUint16
+				} else {
+					return err.New(Invalid, vs, "for", to.Kind().String())
+				}
+
+			case "uts":
+				// uts name
+				if to.Kind() != reflect.String {
+					return err.New(Invalid, vs, "for", to.Kind().String())
+				}
+				r := regexp.MustCompile("^(([a-zA-Z0-9\\-_])+\\.)*([a-zA-Z0-9\\-_])+\\.([a-zA-Z])+$")
+				res = r.MatchString(v.(string))
 
 			case "max":
 				// max value or len
@@ -191,6 +222,7 @@ func Validate(v interface{}, s string) error {
 		}
 		// for all fields or slices
 		vs := ""
+		is := ""
 		n := ""
 		var in interface{}
 		for i := 0; i < l; i++ {
@@ -202,14 +234,30 @@ func Validate(v interface{}, s string) error {
 				if vs == "" {
 					continue
 				}
+				// get the validation ignore tag
+				is = f.Tag.Get("validation-ignore")
+				b := false
+				// check whether we should ignore some validations
+				for _, ign := range strings.Split(ig, ",") {
+					if f.Tag.Get("xml") == ign {
+						b = true
+						break
+					}
+				}
+				if b == true {
+					// ignore this validation
+					debug.Ver("Validate: %s for %s ignored", vs, n)
+					continue
+				}
 			}
-			debug.Ver("Validate: validating %s", n)
+
+			debug.Ver("Validate: validating %s for %s", vs, n)
 			if to.Kind() == reflect.Slice {
 				in = vo.Index(i).Interface()
 			} else {
 				in = vo.Field(i).Interface()
 			}
-			if err := Validate(in, vs); err != nil {
+			if err := Validate(in, is, vs); err != nil {
 				return err
 			}
 		}
