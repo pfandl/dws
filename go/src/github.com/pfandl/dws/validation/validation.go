@@ -18,24 +18,43 @@ var (
 )
 
 func Validate(v interface{}, s string) error {
-	debug.Ver("Validate: %v", v)
-	t := reflect.TypeOf(v)
-	switch t.Kind() {
+	debug.Ver("Validate: \"%v\"", v)
+	if v == nil {
+		return nil
+	}
+	to := reflect.TypeOf(v)
+	switch to.Kind() {
 	case reflect.Bool:
+		fallthrough
 	case reflect.Int:
+		fallthrough
 	case reflect.Int8:
+		fallthrough
 	case reflect.Int16:
+		fallthrough
 	case reflect.Int32:
+		fallthrough
 	case reflect.Int64:
+		fallthrough
 	case reflect.Uint:
+		fallthrough
 	case reflect.Uint8:
+		fallthrough
 	case reflect.Uint16:
+		fallthrough
 	case reflect.Uint32:
+		fallthrough
 	case reflect.Uint64:
+		fallthrough
 	case reflect.Float32:
+		fallthrough
 	case reflect.Float64:
+		fallthrough
 	case reflect.String:
-		debug.Ver("Validate: %v against %s", v, s)
+		debug.Ver("Validate: \"%v\" against %s", v, s)
+		if s == "" {
+			return nil
+		}
 		for _, vs := range strings.Split(s, ",") {
 			svs := vs
 			// check if we have a negation prefix
@@ -71,11 +90,10 @@ func Validate(v interface{}, s string) error {
 
 			case "empty":
 				// empty
-				if t.Kind() != reflect.String {
-					return err.New(Invalid, vs, "for", t.Kind().String())
+				if to.Kind() != reflect.String {
+					return err.New(Invalid, vs, "for", to.Kind().String())
 				}
 				res = (v == "")
-				break
 
 			case "max":
 				// max value or len
@@ -87,76 +105,70 @@ func Validate(v interface{}, s string) error {
 				maxu, eu := strconv.ParseUint(val, 10, 64)
 				maxf, ef := strconv.ParseFloat(val, 64)
 				// check if parsing was ok
-				switch t.Kind() {
+				switch to.Kind() {
 				case reflect.Int:
+					fallthrough
 				case reflect.Int8:
+					fallthrough
 				case reflect.Int16:
+					fallthrough
 				case reflect.Int32:
+					fallthrough
 				case reflect.Int64:
 					if ei != nil {
 						return err.New(InvalidValue, val, "for", vs)
 					}
-					break
 				case reflect.Uint:
+					fallthrough
 				case reflect.Uint8:
+					fallthrough
 				case reflect.Uint16:
+					fallthrough
 				case reflect.Uint32:
+					fallthrough
 				case reflect.Uint64:
+					fallthrough
 				case reflect.String:
 					if eu != nil {
 						return err.New(InvalidValue, val, "for", vs)
 					}
-					break
 				case reflect.Float32:
+					fallthrough
 				case reflect.Float64:
 					if ef != nil {
 						return err.New(InvalidValue, val, "for", vs)
 					}
-					break
 				}
 				// parsing ok, check value
-				switch t.Kind() {
+				switch to.Kind() {
 				case reflect.Bool:
-					return err.New(Invalid, vs, "for", t.Kind().String())
+					return err.New(Invalid, vs, "for", to.Kind().String())
 				case reflect.Int:
 					res = (v.(int) <= int(maxi))
-					break
 				case reflect.Int8:
 					res = (v.(int8) <= int8(maxi))
-					break
 				case reflect.Int16:
 					res = (v.(int16) <= int16(maxi))
-					break
 				case reflect.Int32:
 					res = (v.(int32) <= int32(maxi))
-					break
 				case reflect.Int64:
 					res = (v.(int64) <= maxi)
-					break
 				case reflect.Uint:
 					res = (v.(uint) <= uint(maxu))
-					break
 				case reflect.Uint8:
 					res = (v.(uint8) <= uint8(maxu))
-					break
 				case reflect.Uint16:
 					res = (v.(uint16) <= uint16(maxu))
-					break
 				case reflect.Uint32:
 					res = (v.(uint32) <= uint32(maxu))
-					break
 				case reflect.Uint64:
 					res = (v.(uint64) <= uint64(maxu))
-					break
 				case reflect.Float32:
 					res = (v.(float32) <= float32(maxf))
-					break
 				case reflect.Float64:
 					res = (v.(float64) <= maxf)
-					break
 				case reflect.String:
 					res = (len(v.(string)) <= int(maxu))
-					break
 				}
 			default:
 				return err.New(UnknownIdentifier, vs)
@@ -167,29 +179,42 @@ func Validate(v interface{}, s string) error {
 				return err.New(Failed, vs, "for", v.(string))
 			}
 		}
-		return nil
-		break
-	case reflect.Array:
-	case reflect.Interface:
-	case reflect.Map:
 	case reflect.Slice:
+		fallthrough
 	case reflect.Struct:
 		vo := reflect.ValueOf(v)
-		values := make([]interface{}, vo.NumField())
-		// for all fields
-		for i := 0; i < len(values); i++ {
-			// get the validation tag
-			vs := t.Field(i).Tag.Get("validation")
-			if vs != "" {
-				if err := Validate(vo.Field(i).Interface(), vs); err != nil {
-					return err
+		var l int
+		if to.Kind() == reflect.Slice {
+			l = vo.Len()
+		} else {
+			l = vo.NumField()
+		}
+		// for all fields or slices
+		vs := ""
+		n := ""
+		var in interface{}
+		for i := 0; i < l; i++ {
+			if to.Kind() == reflect.Struct {
+				// get the validation tag
+				f := to.Field(i)
+				n = f.Name
+				vs = f.Tag.Get("validation")
+				if vs == "" {
+					continue
 				}
 			}
+			debug.Ver("Validate: validating %s", n)
+			if to.Kind() == reflect.Slice {
+				in = vo.Index(i).Interface()
+			} else {
+				in = vo.Field(i).Interface()
+			}
+			if err := Validate(in, vs); err != nil {
+				return err
+			}
 		}
-		break
 	default:
-		return err.New(UnsupportedType, t.Name())
-
+		return err.New(UnsupportedType, to.Kind().String())
 	}
 	return nil
 }

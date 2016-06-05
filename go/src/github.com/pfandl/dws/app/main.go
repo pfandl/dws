@@ -5,14 +5,16 @@ import (
 	"github.com/pfandl/dws"
 	"github.com/pfandl/dws/config"
 	"github.com/pfandl/dws/debug"
-	"github.com/pfandl/dws/event"
 	"github.com/pfandl/dws/module"
+	"github.com/pfandl/dws/network"
 	"github.com/pfandl/dws/server"
 	"io"
 	"log"
 	"net"
+	"os"
+	"os/signal"
 	"strings"
-	"time"
+	//"time"
 )
 
 type Command struct {
@@ -179,6 +181,7 @@ func main() {
 	debug.SetLevel(debug.All)
 	module.Register(&config.Config{})
 	module.Register(&server.Server{})
+	module.Register(&network.Network{})
 	if err := module.InitAll(); err != nil {
 		debug.Fat(err.Error())
 	}
@@ -188,57 +191,65 @@ func main() {
 	if err := module.GetError("server"); err != nil {
 		debug.Fat(err.Error())
 	}
-	event.SetAsynchronous(false)
-	event.Fire("add-network", nil)
-	event.Fire("network-added", nil)
-	return
 
-	if err := dws.GatherConfig(); err != nil {
-		log.Fatalf("aborting: %s", err.Error())
-	}
-	if dws.IsBackingStoreHost() == false {
-		// we are the main host
-		if err := dws.InitNetworking(); err != nil {
+	// we are done loading, we now can just wait until we
+	// get killed or gracefully stopped via system signals
+
+	// set up signal interrupting, notifies on all signals
+	c := make(chan os.Signal, 1)
+	signal.Notify(c)
+
+	// Block until a signal is received.
+	_ = <-c
+
+	/*
+		if err := dws.GatherConfig(); err != nil {
 			log.Fatalf("aborting: %s", err.Error())
 		}
+		if dws.IsBackingStoreHost() == false {
+			// we are the main host
+			if err := dws.InitNetworking(); err != nil {
+				log.Fatalf("aborting: %s", err.Error())
+			}
 
-		c := dws.GetConnection()
-		log.Printf("starting server on %s", c)
-		ln, err := net.Listen("tcp", c)
-		if err != nil {
-			log.Fatalf("aborting: ", err)
-		}
-
-		go listenerThread(ln)
-
-		// connect to backing store host if necessary
-		if dws.HasBackingStore() {
-			c := dws.GetBackingStoreConnection()
-			log.Printf("connecting to backing store on %s", c)
-			ln, err := net.Dial("tcp", c)
+			c := dws.GetConnection()
+			log.Printf("starting server on %s", c)
+			ln, err := net.Listen("tcp", c)
 			if err != nil {
 				log.Fatalf("aborting: ", err)
 			}
-			go client(ln, BackingStoreChannel)
-		}
 
-		for {
-			// sleep to not eat the cpu
-			time.Sleep(1 * time.Second)
-		}
+			go listenerThread(ln)
 
-	} else {
-		// backing store host only has to provide
-		// space for our lxc virtual machines
-		c := dws.GetBackingStoreConnection()
-		log.Printf("starting backing store on %s", c)
-		ln, err := net.Listen("tcp", c)
-		if err != nil {
-			log.Fatalf("aborting: ", err)
-		}
+			// connect to backing store host if necessary
+			if dws.HasBackingStore() {
+				c := dws.GetBackingStoreConnection()
+				log.Printf("connecting to backing store on %s", c)
+				ln, err := net.Dial("tcp", c)
+				if err != nil {
+					log.Fatalf("aborting: ", err)
+				}
+				go client(ln, BackingStoreChannel)
+			}
 
-		listenerThread(ln)
-	}
+			for {
+				// sleep to not eat the cpu
+				time.Sleep(1 * time.Second)
+			}
+
+		} else {
+			// backing store host only has to provide
+			// space for our lxc virtual machines
+			c := dws.GetBackingStoreConnection()
+			log.Printf("starting backing store on %s", c)
+			ln, err := net.Listen("tcp", c)
+			if err != nil {
+				log.Fatalf("aborting: ", err)
+			}
+
+			listenerThread(ln)
+		}
+	*/
 }
 
 func Jsonify(v interface{}, err error) string {

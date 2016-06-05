@@ -1,13 +1,57 @@
-package dws
+package network
 
 import (
-	"github.com/milosgajdos83/tenus"
-	"log"
-	"net"
-	"strconv"
-	"strings"
+	//"github.com/milosgajdos83/tenus"
+	"github.com/pfandl/dws/debug"
+	//"github.com/pfandl/dws/error"
+	"github.com/pfandl/dws/module"
+	//"net"
 )
 
+var (
+	// events we fire
+	ActiveEvents = []string{
+		"result",
+	}
+	// events we are interested in
+	PassiveEvents = []string{
+		"network-added",
+		"network-removed",
+	}
+)
+
+type Network struct {
+	module.Module
+}
+
+func (c *Network) Name() string {
+	return "network"
+}
+
+func (c *Network) Events(active bool) []string {
+	debug.Ver("Network: Events %v", active)
+	if active == true {
+		return ActiveEvents
+	} else {
+		return PassiveEvents
+	}
+}
+
+func (c *Network) Init() error {
+	debug.Ver("Network Init()")
+	return nil
+}
+
+func (c *Network) DisInit() error {
+	debug.Ver("Network DisInit()")
+	return nil
+}
+
+func (c *Network) Event(e string, v interface{}) {
+	debug.Ver("Network got event: %s %v", e, v)
+}
+
+/*
 func InitNetworking() error {
 	v, err := GetNetworks()
 	if err != nil {
@@ -48,13 +92,14 @@ func InitNetworking() error {
 				byte(int32(cc)),
 				byte(int32(dd)))
 			log.Printf("configuring %s", n.Name)
-			b.UnsetLinkIp(ip, &ipNet)
-			/*
-				log.Printf("setting gateway %s", gw.String())
-				if err = b.SetLinkDefaultGw(&gw); err != nil {
-					return err
-				}
-			*/
+			b.UnsetLinkIp(ip, &ipNet)*/
+/*
+	log.Printf("setting gateway %s", gw.String())
+	if err = b.SetLinkDefaultGw(&gw); err != nil {
+		return err
+	}
+*/
+/*
 			log.Printf("setting ip %s", ipNet.String())
 			if err = b.SetLinkIp(ip, &ipNet); err != nil {
 				return err
@@ -67,3 +112,4 @@ func InitNetworking() error {
 	}
 	return nil
 }
+*/
