@@ -16,9 +16,12 @@ var (
 
 type _module interface {
 	Name() string
-	Init() error
-	DisInit() error
+	// call of these functions as in following order
 	Events(active bool) []string
+	Init() error
+	Start() error
+	Stop() error
+	// ---------------------------------------------
 	Event(string, interface{})
 }
 
@@ -61,7 +64,7 @@ func GetError(s string) error {
 	return err.New(ModuleNotFound, s)
 }
 
-func InitAll() error {
+func StartAll() error {
 	debug.Ver("Module: InitAll()")
 	// active events
 	for _, m := range Modules {
@@ -87,13 +90,23 @@ func InitAll() error {
 			debug.Info("Module: registered callback %s for %s", e, n)
 		}
 	}
+	// init
 	for _, m := range Modules {
 		m.Error = (*m.m).Init()
+	}
+	// start
+	for _, m := range Modules {
+		if m.Error == nil {
+			m.Error = (*m.m).Start()
+		}
 	}
 	return nil
 }
 
-func DisInitAll() {
+func StopAll() {
+	for _, m := range Modules {
+		m.Error = (*m.m).Stop()
+	}
 	// passive events
 	for _, m := range Modules {
 		for _, e := range (*m.m).Events(false) {
@@ -105,8 +118,5 @@ func DisInitAll() {
 		for _, e := range (*m.m).Events(true) {
 			event.UnRegisterEvent(e)
 		}
-	}
-	for _, m := range Modules {
-		m.Error = (*m.m).DisInit()
 	}
 }

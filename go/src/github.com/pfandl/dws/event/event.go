@@ -107,7 +107,7 @@ func RegisterEvent(s string) (*ActiveEvent, error) {
 		Events[s] = a
 		return a, nil
 	}
-	return nil, err.New(EventAlreadyRegistered, s)
+	return Events[s], nil
 }
 
 func UnRegisterEvent(s string) error {

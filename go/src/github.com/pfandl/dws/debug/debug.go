@@ -5,7 +5,8 @@ import (
 )
 
 var (
-	Level = (Information | Warning | Error | Fatal)
+	Level    = (Information | Warning | Error | Fatal)
+	_OnFatal *func()
 )
 var (
 	Information = 1 << 0
@@ -65,12 +66,18 @@ func Log(i int, s ...interface{}) {
 		if Level&Fatal > 0 {
 			m = "Fatal: " + msg
 		} else {
+			if _OnFatal != nil {
+				(*_OnFatal)()
+			}
 			log.Fatalf("program cannot continue")
 			return
 		}
 		break
 	}
 	if i == Fatal {
+		if _OnFatal != nil {
+			(*_OnFatal)()
+		}
 		log.Fatalf(m, s[start:]...)
 	} else {
 		log.Printf(m, s[start:]...)
@@ -95,4 +102,8 @@ func Ver(v ...interface{}) {
 
 func Fat(v ...interface{}) {
 	Log(Fatal, v...)
+}
+
+func OnFatal(f func()) {
+	_OnFatal = &f
 }

@@ -11,12 +11,14 @@ import (
 var (
 	// events we fire
 	ActiveEvents = []string{
-		"result",
+		"add-network-result",
+		"remove-network-result",
 	}
 	// events we are interested in
 	PassiveEvents = []string{
 		"network-available",
-		"network-removed",
+		"check-network-added",
+		"check-network-removed",
 	}
 )
 
@@ -42,8 +44,13 @@ func (c *Network) Init() error {
 	return nil
 }
 
-func (c *Network) DisInit() error {
-	debug.Ver("Network DisInit()")
+func (c *Network) Start() error {
+	debug.Ver("Network Start()")
+	return nil
+}
+
+func (c *Network) Stop() error {
+	debug.Ver("Network Stop()")
 	return nil
 }
 

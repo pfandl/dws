@@ -181,10 +181,13 @@ func listenerThread(ln net.Listener) {
 
 func main() {
 	debug.SetLevel(debug.All)
+	debug.OnFatal(func() {
+		module.StopAll()
+	})
 	module.Register(&config.Config{})
 	module.Register(&server.Server{})
 	module.Register(&network.Network{})
-	if err := module.InitAll(); err != nil {
+	if err := module.StartAll(); err != nil {
 		debug.Fat(err.Error())
 	}
 	if err := module.GetError("config"); err != nil {
@@ -218,6 +221,10 @@ func main() {
 
 	// Block until a signal is received.
 	_ = <-c
+
+	debug.Info("signal received, stopping")
+
+	module.StopAll()
 
 	/*
 		if err := dws.GatherConfig(); err != nil {

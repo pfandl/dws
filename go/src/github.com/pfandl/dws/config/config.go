@@ -25,29 +25,28 @@ const (
 var (
 	// events we fire
 	ActiveEvents = []string{
-		// result of events fired by server
-		"add-server-result",
-		"remove-server-result",
-		"add-backingstore-result",
-		"remove-backingstore-result",
-		"add-network-result",
-		"remove-network-result",
-		"add-host-result",
-		"remove-host-result",
 		// events fired after config reading
 		"server-available",
 		"backingstore-available",
 		"network-available",
 		"host-available",
 		// events fired after executing commands
-		"server-added",
-		"backingstore-added",
-		"network-added",
-		"host-added",
-		"server-removed",
-		"backingstore-removed",
-		"network-removed",
-		"host-removed",
+		"add-server-result",
+		"check-server-added",
+		"remove-server-result",
+		"check-server-removed",
+		"add-backingstore-result",
+		"check-backingstore-added",
+		"remove-backingstore-result",
+		"check-backingstore-removed",
+		"add-network-result",
+		"check-network-added",
+		"remove-network-result",
+		"check-network-removed",
+		"add-host-result",
+		"check-host-added",
+		"remove-host-result",
+		"check-host-removed",
 	}
 	// events we are interested in
 	PassiveEvents = []string{
@@ -81,7 +80,7 @@ var (
 	// set to true if comparing networks
 	ComparingNetworks = true
 	// our config data
-	Data *ConfigData
+	LoadedConfig *Config
 	// errors
 	NoConfig           = "no valid configuration found"
 	NetworkNameUsed    = "network name is already used"
@@ -94,6 +93,10 @@ var (
 	NetworkNotFound    = "network not found"
 	HostAdded          = "host was added"
 )
+
+type Propagate interface {
+	Available() error
+}
 
 type SaneConfig interface {
 	IsSane(c *ConfigData, s string) error
@@ -109,6 +112,7 @@ type IpV4 struct {
 }
 
 type Host struct {
+	Propagate
 	SaneConfig
 	XMLName xml.Name `xml:"host"`
 	Name    string   `xml:"name,attr" validation:"!empty"`
@@ -118,6 +122,7 @@ type Host struct {
 }
 
 type Network struct {
+	Propagate
 	SaneConfig
 	XMLName xml.Name `xml:"network"`
 	Name    string   `xml:"name,attr" validation:"!empty,max=15"`
@@ -127,11 +132,13 @@ type Network struct {
 }
 
 type Log struct {
+	Propagate
 	SaneConfig
 	XMLName xml.Name `xml:"log"`
 }
 
 type Server struct {
+	Propagate
 	SaneConfig
 	XMLName  xml.Name  `xml:"server"`
 	Name     string    `xml:"name,attr" validation:"!empty"`
@@ -140,11 +147,22 @@ type Server struct {
 }
 
 type ConfigData struct {
+	Propagate
 	SaneConfig
 	XMLName      xml.Name `xml:"config"`
 	Name         string   `xml:"name,attr" validation:"!empty"`
 	Servers      []Server `xml:"server" validation:"slice"`
 	ValidateData bool
+}
+
+func (d *ConfigData) Available() error {
+	debug.Ver("ConfigData: Available")
+	for i := 0; i < len(d.Servers); i++ {
+		if err := d.Servers[i].Available(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (d *ConfigData) IsSane(c *ConfigData, s string) error {
@@ -166,6 +184,17 @@ func (d *ConfigData) IsSane(c *ConfigData, s string) error {
 	return nil
 }
 
+func (d *Server) Available() error {
+	debug.Ver("Server: Available")
+	event.Fire("server-available", d)
+	for i := 0; i < len(d.Networks); i++ {
+		if err := d.Networks[i].Available(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (d *Server) IsSane(c *ConfigData, s string) error {
 	debug.Ver("Server: IsSane")
 	for i := 0; i < len(d.Networks); i++ {
@@ -182,6 +211,17 @@ func (d *Server) IsSane(c *ConfigData, s string) error {
 		}
 	}
 
+	return nil
+}
+
+func (d *Network) Available() error {
+	debug.Ver("Network: Available")
+	event.Fire("network-available", d)
+	for i := 0; i < len(d.Hosts); i++ {
+		if err := d.Hosts[i].Available(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -231,6 +271,12 @@ func (d *Network) IsSane(c *ConfigData, s string) error {
 		}
 	}
 
+	return nil
+}
+
+func (d *Host) Available() error {
+	debug.Ver("Host: Available")
+	event.Fire("host-available", d)
 	return nil
 }
 
@@ -353,6 +399,7 @@ func (d *IpV4) IsSane(c *ConfigData, s string) error {
 
 type Config struct {
 	module.Module
+	Data *ConfigData
 }
 
 func (c *Config) Name() string {
@@ -404,17 +451,22 @@ func (c *Config) Init() error {
 		}
 
 		// use this config
-		Data = conf
+		c.Data = conf
 		// start validating data in the IsSane functions
-		Data.ValidateData = true
+		c.Data.ValidateData = true
 
 		return nil
 	}
 	return err.New(NoConfig)
 }
 
-func (c *Config) DisInit() error {
-	debug.Ver("Config DisInit()")
+func (c *Config) Start() error {
+	debug.Ver("Config Start()")
+	return c.Data.Available()
+}
+
+func (c *Config) Stop() error {
+	debug.Ver("Config Stop()")
 	return nil
 }
 
@@ -434,18 +486,21 @@ func (c *Config) AddHost(m *data.Message) {
 
 	// fire result event after function is done
 	defer func() {
-		event.Fire("add-host-result", m)
 		if m.Succeeded == true {
-			event.Fire("host-added", m.Data)
+			// host module should also check data
+			event.Fire("check-host-added", m.Data)
+		} else {
+			// something went wrong, inform server about that
+			event.Fire("add-host-result", m)
 		}
 	}()
 
-	if e := h.IsSane(Data, "subnet,port"); e != nil {
+	if e := h.IsSane(c.Data, "subnet,port"); e != nil {
 		// something is wrong with specified data
 		m.Message = e.Error()
 		m.Succeeded = false
 	} else {
-		for _, s := range Data.Servers {
+		for _, s := range c.Data.Servers {
 			for _, n := range s.Networks {
 				if n.Name == h.Network {
 					n.Hosts = append(n.Hosts, h)

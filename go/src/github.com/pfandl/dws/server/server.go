@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/pfandl/dws/debug"
 	"github.com/pfandl/dws/module"
+	"time"
 )
 
 var (
@@ -32,6 +33,7 @@ var (
 
 type Server struct {
 	module.Module
+	Running bool
 }
 
 func (c *Server) Name() string {
@@ -52,8 +54,22 @@ func (c *Server) Init() error {
 	return nil
 }
 
-func (c *Server) DisInit() error {
-	debug.Ver("Server DisInit()")
+func (c *Server) Start() error {
+	debug.Ver("Server Start()")
+	c.Running = true
+	// run in thread
+	go func() {
+		for c.Running {
+			debug.Ver("Server: Thread()")
+			time.Sleep(1 * time.Second)
+		}
+	}()
+	return nil
+}
+
+func (c *Server) Stop() error {
+	debug.Ver("Server Stop()")
+	c.Running = false
 	return nil
 }
 
