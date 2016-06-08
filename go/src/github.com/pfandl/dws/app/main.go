@@ -196,6 +196,9 @@ func main() {
 	if err := module.GetError("server"); err != nil {
 		debug.Fat(err.Error())
 	}
+	if err := module.GetError("network"); err != nil {
+		debug.Fat(err.Error())
+	}
 
 	h := config.Host{
 		Name: "test",
