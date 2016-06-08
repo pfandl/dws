@@ -131,18 +131,45 @@ type Log struct {
 	XMLName xml.Name `xml:"log"`
 }
 
+type Server struct {
+	SaneConfig
+	XMLName  xml.Name  `xml:"server"`
+	Name     string    `xml:"name,attr" validation:"!empty"`
+	Networks []Network `xml:"network"   validation:"slice"`
+	Log      Log       `xml:"log"`
+}
+
 type ConfigData struct {
 	SaneConfig
-	XMLName      xml.Name  `xml:"config"`
-	Name         string    `xml:"name,attr" validation:"!empty"`
-	Networks     []Network `xml:"network"   validation:"slice"`
+	XMLName      xml.Name `xml:"config"`
+	Name         string   `xml:"name,attr" validation:"!empty"`
+	Servers      []Server `xml:"server" validation:"slice"`
 	ValidateData bool
 }
 
 func (d *ConfigData) IsSane(c *ConfigData, s string) error {
 	debug.Ver("ConfigData: IsSane")
-	for i := 0; i < len(c.Networks); i++ {
-		n := &c.Networks[i]
+	for i := 0; i < len(c.Servers); i++ {
+		srv := &c.Servers[i]
+		if err := srv.IsSane(c, s); err != nil {
+			return err
+		}
+	}
+
+	// need to validate data thats not read out from the config file
+	if c.ValidateData == true {
+		if err := validation.Validate(*d, s, ""); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (d *Server) IsSane(c *ConfigData, s string) error {
+	debug.Ver("Server: IsSane")
+	for i := 0; i < len(d.Networks); i++ {
+		n := &d.Networks[i]
 		if err := n.IsSane(c, s); err != nil {
 			return err
 		}
@@ -176,20 +203,23 @@ func (d *Network) IsSane(c *ConfigData, s string) error {
 		return err
 	}
 	// check network names and hosts
-	for i := 0; i < len(c.Networks); i++ {
-		n := &c.Networks[i]
-		// skip same object (do not compare to itself)
-		if d == n {
-			continue
-		}
-		debug.Ver("Network: IsSane checking names %s %s", d.Name, n.Name)
-		if d.Name == n.Name {
-			return err.New(NetworkNameUsed, d.Name)
-		}
-		for i := 0; i < len(n.Hosts); i++ {
-			h := &n.Hosts[i]
-			if err := h.IsSane(c, s); err != nil {
-				return err
+	for i := 0; i < len(c.Servers); i++ {
+		srv := &c.Servers[i]
+		for i := 0; i < len(srv.Networks); i++ {
+			n := &srv.Networks[i]
+			// skip same object (do not compare to itself)
+			if d == n {
+				continue
+			}
+			debug.Ver("Network: IsSane checking names %s %s", d.Name, n.Name)
+			if d.Name == n.Name {
+				return err.New(NetworkNameUsed, d.Name)
+			}
+			for i := 0; i < len(n.Hosts); i++ {
+				h := &n.Hosts[i]
+				if err := h.IsSane(c, s); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -207,35 +237,39 @@ func (d *Network) IsSane(c *ConfigData, s string) error {
 func (d *Host) IsSane(c *ConfigData, s string) error {
 	debug.Ver("Host: IsSane")
 	nf := false
-	for i := 0; i < len(c.Networks); i++ {
-		n := &c.Networks[i]
-		for i := 0; i < len(n.Hosts); i++ {
-			h := &n.Hosts[i]
-			// skip same object (do not compare to itself)
-			if d == h {
-				continue
+	for i := 0; i < len(c.Servers); i++ {
+		srv := &c.Servers[i]
+		for i := 0; i < len(srv.Networks); i++ {
+			n := &srv.Networks[i]
+			for i := 0; i < len(n.Hosts); i++ {
+				h := &n.Hosts[i]
+				// skip same object (do not compare to itself)
+				if d == h {
+					continue
+				}
+				debug.Ver("Host: IsSane checking names %s %s", d.Name, h.Name)
+				// check name
+				if d.Name == h.Name {
+					return err.New(NameAlreadyUsed, d.Name)
+				}
+				debug.Ver("Host: IsSane checking uts names %s %s", d.UtsName, h.UtsName)
+				// check uts name
+				if d.UtsName == h.UtsName {
+					return err.New(UtsNameAlreadyUsed, d.UtsName)
+				}
+				// check ip
+				if err := d.IpV4.IsSane(c, s); err != nil {
+					return err
+				}
 			}
-			debug.Ver("Host: IsSane checking names %s %s", d.Name, h.Name)
-			// check name
-			if d.Name == h.Name {
-				return err.New(NameAlreadyUsed, d.Name)
+			// if we get an add-host event, we have to check if the
+			// passed network is actually set up
+			if d.Network != "" && n.Name == d.Network {
+				nf = true
 			}
-			debug.Ver("Host: IsSane checking uts names %s %s", d.UtsName, h.UtsName)
-			// check uts name
-			if d.UtsName == h.UtsName {
-				return err.New(UtsNameAlreadyUsed, d.UtsName)
-			}
-			// check ip
-			if err := d.IpV4.IsSane(c, s); err != nil {
-				return err
-			}
-		}
-		// if we get an add-host event, we have to check if the
-		// passed network is actually set up
-		if d.Network != "" && n.Name == d.Network {
-			nf = true
 		}
 	}
+
 	// if we get an add-host event, we have to check if the
 	// passed network is actually set up
 	if d.Network != "" && nf == false {
@@ -254,51 +288,54 @@ func (d *Host) IsSane(c *ConfigData, s string) error {
 
 func (d *IpV4) IsSane(c *ConfigData, s string) error {
 	debug.Ver("IpV4: IsSane")
-	for i := 0; i < len(c.Networks); i++ {
-		n := &c.Networks[i]
-		// skip same object (do not compare to itself)
-		if d == &n.IpV4 {
-			continue
-		}
-		if ComparingNetworks {
-			debug.Ver("IpV4: IsSane checking network ip %s %s", d.Address, n.IpV4.Address)
-			if d.Address == n.IpV4.Address {
-				return err.New(IpV4AlreadyUsed, d.Address)
+	for i := 0; i < len(c.Servers); i++ {
+		srv := &c.Servers[i]
+		for i := 0; i < len(srv.Networks); i++ {
+			n := &srv.Networks[i]
+			// skip same object (do not compare to itself)
+			if d == &n.IpV4 {
+				continue
 			}
-			debug.Ver("IpV4: IsSane checking network subnet %s", d.Subnet)
-			// check if network has same ip range as existing
-			// TODO: implement the real logic
-			match := 0
-			ip1 := strings.Split(d.Address, ".")
-			ip2 := strings.Split(n.IpV4.Address, ".")
-			sn := strings.Split(d.Subnet, ".")
-			var l int
-			for i := 0; i < 4; i++ {
-				if sn[i] != "255" {
-					l = i
-					break
-				}
-			}
-			for i := 0; i < l; i++ {
-				if ip1[i] != ip2[i] {
-					break
-				}
-				match++
-			}
-			if match >= l {
-				return err.New(IpV4Overlap, n.Name)
-			}
-
-		} else {
-			for i := 0; i < len(n.Hosts); i++ {
-				h := &n.Hosts[i]
-				// skip same object (do not compare to itself)
-				if d == &h.IpV4 {
-					continue
-				}
-				debug.Ver("IpV4: IsSane checking host ip %s %s", d.Address, h.IpV4.Address)
-				if d.Address == h.IpV4.Address {
+			if ComparingNetworks {
+				debug.Ver("IpV4: IsSane checking network ip %s %s", d.Address, n.IpV4.Address)
+				if d.Address == n.IpV4.Address {
 					return err.New(IpV4AlreadyUsed, d.Address)
+				}
+				debug.Ver("IpV4: IsSane checking network subnet %s", d.Subnet)
+				// check if network has same ip range as existing
+				// TODO: implement the real logic
+				match := 0
+				ip1 := strings.Split(d.Address, ".")
+				ip2 := strings.Split(n.IpV4.Address, ".")
+				sn := strings.Split(d.Subnet, ".")
+				var l int
+				for i := 0; i < 4; i++ {
+					if sn[i] != "255" {
+						l = i
+						break
+					}
+				}
+				for i := 0; i < l; i++ {
+					if ip1[i] != ip2[i] {
+						break
+					}
+					match++
+				}
+				if match >= l {
+					return err.New(IpV4Overlap, n.Name)
+				}
+
+			} else {
+				for i := 0; i < len(n.Hosts); i++ {
+					h := &n.Hosts[i]
+					// skip same object (do not compare to itself)
+					if d == &h.IpV4 {
+						continue
+					}
+					debug.Ver("IpV4: IsSane checking host ip %s %s", d.Address, h.IpV4.Address)
+					if d.Address == h.IpV4.Address {
+						return err.New(IpV4AlreadyUsed, d.Address)
+					}
 				}
 			}
 		}
@@ -408,12 +445,14 @@ func (c *Config) AddHost(m *data.Message) {
 		m.Message = e.Error()
 		m.Succeeded = false
 	} else {
-		for _, n := range Data.Networks {
-			if n.Name == h.Network {
-				n.Hosts = append(n.Hosts, h)
-				m.Message = HostAdded
-				m.Succeeded = true
-				return
+		for _, s := range Data.Servers {
+			for _, n := range s.Networks {
+				if n.Name == h.Network {
+					n.Hosts = append(n.Hosts, h)
+					m.Message = HostAdded
+					m.Succeeded = true
+					return
+				}
 			}
 		}
 		// uhm... no network with this name found
