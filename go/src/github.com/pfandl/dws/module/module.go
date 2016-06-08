@@ -94,6 +94,8 @@ func StartAll() error {
 	for _, m := range Modules {
 		m.Error = (*m.m).Init()
 	}
+	// finish all outstanding asynchronous events
+	event.Flush()
 	// start
 	for _, m := range Modules {
 		if m.Error == nil {

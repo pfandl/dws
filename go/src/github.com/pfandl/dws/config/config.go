@@ -455,14 +455,14 @@ func (c *Config) Init() error {
 		// start validating data in the IsSane functions
 		c.Data.ValidateData = true
 
-		return nil
+		return c.Data.Available()
 	}
 	return err.New(NoConfig)
 }
 
 func (c *Config) Start() error {
 	debug.Ver("Config Start()")
-	return c.Data.Available()
+	return nil
 }
 
 func (c *Config) Stop() error {
@@ -476,7 +476,7 @@ func (c *Config) Event(e string, v interface{}) {
 	case "add-host":
 		c.AddHost(v.(*data.Message))
 	default:
-		debug.Err("Config event %s unknown", e)
+		debug.Fat("Config event %s unknown", e)
 	}
 }
 

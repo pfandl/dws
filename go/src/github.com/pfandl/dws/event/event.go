@@ -1,15 +1,20 @@
 package event
 
-import "github.com/pfandl/dws/error"
+import (
+	"github.com/pfandl/dws/error"
+	"time"
+)
 
 var (
 	Asynchronous = true
 	Events       = make(map[string]*ActiveEvent)
-
+	// errors
 	EventAlreadyRegistered    = "event already registered"
 	EventNotFound             = "event not found"
 	CallbackAlreadyRegistered = "callback already registered"
 	CallbackNotFound          = "callback not found"
+	// next id for asynchronous events
+	NextId = uint64(0)
 )
 
 type _activeEvent interface {
@@ -31,9 +36,10 @@ type _event interface {
 
 type ActiveEvent struct {
 	_activeEvent
-	Listeners []_passiveEvent
-	Callbacks []func(string, interface{})
-	Name      string
+	Listeners  []_passiveEvent
+	Unfinished []uint64
+	Callbacks  []func(string, interface{})
+	Name       string
 }
 
 func (a *ActiveEvent) Register(p _passiveEvent) error {
@@ -76,17 +82,37 @@ func (a *ActiveEvent) UnRegisterCallback(c func(string, interface{})) error {
 	return err.New(CallbackNotFound)
 }
 
+func (a *ActiveEvent) Asynchronous(f func()) {
+	// grab next id
+	id := NextId
+	// and increase it
+	NextId++
+	// append this id to unfinished list
+	a.Unfinished = append(a.Unfinished, id)
+	go func(u uint64) {
+		// execute passed function
+		f()
+		// remove this id from unfinished list
+		for i := 0; i < len(a.Unfinished); i++ {
+			if a.Unfinished[i] == u {
+				a.Unfinished = append(a.Unfinished[:i], a.Unfinished[i+1:]...)
+				break
+			}
+		}
+	}(id)
+}
+
 func (a *ActiveEvent) Fire(v interface{}) {
 	for _, l := range a.Listeners {
 		if Asynchronous == true {
-			go l.Extinguish(v)
+			a.Asynchronous(func() { l.Extinguish(v) })
 		} else {
 			l.Extinguish(v)
 		}
 	}
 	for _, c := range a.Callbacks {
 		if Asynchronous == true {
-			go c(a.Name, v)
+			a.Asynchronous(func() { c(a.Name, v) })
 		} else {
 			c(a.Name, v)
 		}
@@ -155,4 +181,12 @@ func Fire(s string, v interface{}) error {
 		Events[s].Fire(v)
 	}
 	return err.New(EventNotFound, s)
+}
+
+func Flush() {
+	for _, e := range Events {
+		for len(e.Unfinished) > 0 {
+			time.Sleep(1 * time.Millisecond)
+		}
+	}
 }

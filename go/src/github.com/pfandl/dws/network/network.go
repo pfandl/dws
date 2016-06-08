@@ -1,9 +1,10 @@
 package network
 
 import (
-	//"github.com/milosgajdos83/tenus"
+	"github.com/milosgajdos83/tenus"
 	"github.com/pfandl/dws/debug"
 	//"github.com/pfandl/dws/error"
+	"github.com/pfandl/dws/config"
 	"github.com/pfandl/dws/module"
 	//"net"
 )
@@ -24,6 +25,7 @@ var (
 
 type Network struct {
 	module.Module
+	Networks []*config.Network
 }
 
 func (c *Network) Name() string {
@@ -41,6 +43,13 @@ func (c *Network) Events(active bool) []string {
 
 func (c *Network) Init() error {
 	debug.Ver("Network Init()")
+	// check all networks for existance
+	for _, n := range c.Networks {
+		debug.Ver("Network check existance %s", n.Name)
+		if _, e := tenus.BridgeFromName(n.Name); e != nil {
+			return e
+		}
+	}
 	return nil
 }
 
@@ -56,6 +65,17 @@ func (c *Network) Stop() error {
 
 func (c *Network) Event(e string, v interface{}) {
 	debug.Ver("Network got event: %s %v", e, v)
+	switch e {
+	case "network-available":
+		c.NetworkAvailable(v.(*config.Network))
+	default:
+		debug.Fat("Network event %s unknown", e)
+	}
+}
+
+func (c *Network) NetworkAvailable(n *config.Network) {
+	debug.Ver("Network network available: %v", n)
+	c.Networks = append(c.Networks, n)
 }
 
 /*

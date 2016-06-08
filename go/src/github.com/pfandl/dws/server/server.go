@@ -60,7 +60,6 @@ func (c *Server) Start() error {
 	// run in thread
 	go func() {
 		for c.Running {
-			debug.Ver("Server: Thread()")
 			time.Sleep(1 * time.Second)
 		}
 	}()
