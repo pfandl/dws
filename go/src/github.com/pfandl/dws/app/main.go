@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"github.com/pfandl/dws"
 	"github.com/pfandl/dws/config"
+	"github.com/pfandl/dws/data"
 	"github.com/pfandl/dws/debug"
+	"github.com/pfandl/dws/event"
 	"github.com/pfandl/dws/module"
 	"github.com/pfandl/dws/network"
 	"github.com/pfandl/dws/server"
@@ -191,6 +193,21 @@ func main() {
 	if err := module.GetError("server"); err != nil {
 		debug.Fat(err.Error())
 	}
+
+	h := config.Host{
+		Name: "test",
+		IpV4: config.IpV4{
+			Address: "129.168.1.1",
+			Mac:     "aa:bb:cc:dd:ee:ff",
+		},
+		UtsName: "bla.com",
+		Network: "dws-production",
+	}
+	m := &data.Message{
+		Data:    h,
+		Message: "add-host",
+	}
+	event.Fire(m.Message, m)
 
 	// we are done loading, we now can just wait until we
 	// get killed or gracefully stopped via system signals

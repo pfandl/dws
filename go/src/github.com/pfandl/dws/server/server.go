@@ -19,14 +19,14 @@ var (
 	}
 	// events we are interested in
 	PassiveEvents = []string{
-		"server-added",
-		"server-removed",
-		"backingstore-added",
-		"backingstore-removed",
-		"network-added",
-		"network-removed",
-		"host-added",
-		"host-removed",
+		"add-server-result",
+		"remove-server-result",
+		"add-backingstore-result",
+		"remove-backingstore-result",
+		"add-network-result",
+		"remove-network-result",
+		"add-host-result",
+		"remove-host-result",
 	}
 )
 

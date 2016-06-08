@@ -15,7 +15,7 @@ var (
 	}
 	// events we are interested in
 	PassiveEvents = []string{
-		"network-added",
+		"network-available",
 		"network-removed",
 	}
 )
