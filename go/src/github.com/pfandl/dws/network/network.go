@@ -3,8 +3,10 @@ package network
 import (
 	"github.com/milosgajdos83/tenus"
 	"github.com/pfandl/dws/config"
+	"github.com/pfandl/dws/data"
 	"github.com/pfandl/dws/debug"
 	"github.com/pfandl/dws/error"
+	"github.com/pfandl/dws/event"
 	"github.com/pfandl/dws/module"
 	"net"
 	"os"
@@ -28,6 +30,8 @@ var (
 	CannotParseIpAddress = "cannot parse ip address"
 	IpRemovedFromBridge  = "ip address was removed from bridge"
 	SubnetMismatch       = "configured and actual bridge subnet mismatch"
+	// messages
+	NetworkAdded = "network was added"
 
 	FixNetwork = false
 )
@@ -86,6 +90,7 @@ func (c *Network) Start() error {
 			a, e := b.NetInterface().Addrs()
 			for _, i := range a {
 				debug.Ver("Network has ip %s %s", i.String(), i.Network())
+				// the ip we get is probably in xxx.xxx.xxx.xxx/xx notation
 				if strings.Split(i.String(), "/")[0] == n.IpV4.Address {
 					f = true
 					break
@@ -181,13 +186,39 @@ func (c *Network) Event(e string, v interface{}) {
 	debug.Ver("Network got event: %s %v", e, v)
 	switch e {
 	case "network-available":
-		c.NetworkAvailable(v.(*config.Network))
+		c.Available(v.(*config.Network))
+	case "check-network-added":
+		c.Added(v.(*data.Message))
 	default:
 		debug.Fat("Network event %s unknown", e)
 	}
 }
 
-func (c *Network) NetworkAvailable(n *config.Network) {
-	debug.Ver("Network network available: %v", n)
+func (c *Network) Add(n *config.Network) {
+	debug.Ver("Network Add: %v", n)
 	c.Networks = append(c.Networks, n)
+}
+
+func (c *Network) Added(m *data.Message) {
+	debug.Ver("Network network available: %v", m.Data)
+	n := m.Data.(config.Network)
+
+	// fire result event after function is done
+	defer func() {
+		event.Fire("add-network-result", m)
+	}()
+
+	if err := c.CreateBridge(&n); err != nil {
+		m.Succeeded = false
+		m.Message = err.Error()
+	} else {
+		m.Succeeded = true
+		m.Message = NetworkAdded
+		c.Add(&n)
+	}
+}
+
+func (c *Network) Available(n *config.Network) {
+	debug.Ver("Network network available: %v", n)
+	c.Add(n)
 }

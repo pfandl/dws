@@ -31,21 +31,24 @@ var (
 		"network-available",
 		"host-available",
 		// events fired after executing commands
+		// when we return the result to server
 		"add-server-result",
-		"check-server-added",
 		"remove-server-result",
-		"check-server-removed",
 		"add-backingstore-result",
-		"check-backingstore-added",
 		"remove-backingstore-result",
-		"check-backingstore-removed",
 		"add-network-result",
-		"check-network-added",
 		"remove-network-result",
-		"check-network-removed",
 		"add-host-result",
-		"check-host-added",
 		"remove-host-result",
+		// events fired after executing commands
+		// when we are ok and other modules return the result to server
+		"check-server-added",
+		"check-server-removed",
+		"check-backingstore-added",
+		"check-backingstore-removed",
+		"check-network-added",
+		"check-network-removed",
+		"check-host-added",
 		"check-host-removed",
 	}
 	// events we are interested in
@@ -82,16 +85,21 @@ var (
 	// our config data
 	LoadedConfig *Config
 	// errors
-	NoConfig           = "no valid configuration found"
-	NetworkNameUsed    = "network name is already used"
-	InvalidNetworkType = "network type is invalid"
-	IpV4Overlap        = "network ip/subnet is overlapping with existing network"
-	IpV4AlreadyUsed    = "ip is already in use"
-	NameAlreadyUsed    = "name is already in use"
-	UtsNameAlreadyUsed = "uts name is already in use"
-	WrongSubnet        = "subnets do not match"
-	NetworkNotFound    = "network not found"
-	HostAdded          = "host was added"
+	NoConfig               = "no valid configuration found"
+	ServerNameAlreadyUsed  = "server name is already used"
+	NetworkNameAlreadyUsed = "network name is already used"
+	InvalidNetworkType     = "network type is invalid"
+	IpV4Overlap            = "network ip/subnet is overlapping with existing network"
+	IpV4AlreadyUsed        = "ip is already in use"
+	HostNameAlreadyUsed    = "host name is already in use"
+	UtsNameAlreadyUsed     = "uts name is already in use"
+	WrongSubnet            = "subnets do not match"
+	ServerNotFound         = "server not found"
+	NetworkNotFound        = "network not found"
+	// messages
+	ServerAdded  = "server was added"
+	HostAdded    = "host was added"
+	NetworkAdded = "network was added"
 )
 
 type Propagate interface {
@@ -129,6 +137,7 @@ type Network struct {
 	IpV4    IpV4     `xml:"ipv4"      validation:"struct"         validation-ignore:"mac,port"`
 	Type    string   `xml:"type"      validation:"!empty"`
 	Hosts   []Host   `xml:"host"      validation:"slice"`
+	Server  string
 }
 
 type Log struct {
@@ -142,6 +151,7 @@ type Server struct {
 	SaneConfig
 	XMLName  xml.Name  `xml:"server"`
 	Name     string    `xml:"name,attr" validation:"!empty"`
+	IpV4     IpV4      `xml:"ipv4"      validation:"struct"         validation-ignore:"address,subnet,mac"`
 	Networks []Network `xml:"network"   validation:"slice"`
 	Log      Log       `xml:"log"`
 }
@@ -197,6 +207,19 @@ func (d *Server) Available() error {
 
 func (d *Server) IsSane(c *ConfigData, s string) error {
 	debug.Ver("Server: IsSane")
+
+	for i := 0; i < len(c.Servers); i++ {
+		s := &c.Servers[i]
+		// skip same object (do not compare to itself)
+		if s == d {
+			continue
+		}
+		debug.Ver("Server: IsSane checking names %s %s", d.Name, s.Name)
+		if d.Name == s.Name {
+			return err.New(ServerNameAlreadyUsed, d.Name)
+		}
+	}
+
 	for i := 0; i < len(d.Networks); i++ {
 		n := &d.Networks[i]
 		if err := n.IsSane(c, s); err != nil {
@@ -253,7 +276,7 @@ func (d *Network) IsSane(c *ConfigData, s string) error {
 			}
 			debug.Ver("Network: IsSane checking names %s %s", d.Name, n.Name)
 			if d.Name == n.Name {
-				return err.New(NetworkNameUsed, d.Name)
+				return err.New(NetworkNameAlreadyUsed, d.Name)
 			}
 			for i := 0; i < len(n.Hosts); i++ {
 				h := &n.Hosts[i]
@@ -296,7 +319,7 @@ func (d *Host) IsSane(c *ConfigData, s string) error {
 				debug.Ver("Host: IsSane checking names %s %s", d.Name, h.Name)
 				// check name
 				if d.Name == h.Name {
-					return err.New(NameAlreadyUsed, d.Name)
+					return err.New(HostNameAlreadyUsed, d.Name)
 				}
 				debug.Ver("Host: IsSane checking uts names %s %s", d.UtsName, h.UtsName)
 				// check uts name
@@ -367,7 +390,7 @@ func (d *IpV4) IsSane(c *ConfigData, s string) error {
 					}
 					match++
 				}
-				if match >= l {
+				if match >= l && match != 0 {
 					return err.New(IpV4Overlap, n.Name)
 				}
 
@@ -473,10 +496,74 @@ func (c *Config) Stop() error {
 func (c *Config) Event(e string, v interface{}) {
 	debug.Ver("Config got event: %s %v", e, v)
 	switch e {
+	case "add-server":
+		c.AddServer(v.(*data.Message))
+	case "add-network":
+		c.AddNetwork(v.(*data.Message))
 	case "add-host":
 		c.AddHost(v.(*data.Message))
 	default:
 		debug.Fat("Config event %s unknown", e)
+	}
+}
+
+func (c *Config) AddServer(m *data.Message) {
+	debug.Ver("Config AddServer: %v", m)
+	s := m.Data.(Server)
+
+	// fire result event after function is done
+	defer func() {
+		if m.Succeeded == true {
+			// host module should also check data
+			event.Fire("check-server-added", m)
+		} else {
+			// something went wrong, inform server about that
+			event.Fire("add-server-result", m)
+		}
+	}()
+
+	if e := s.IsSane(c.Data, "address,subnet,mac"); e != nil {
+		// something is wrong with specified data
+		m.Message = e.Error()
+		m.Succeeded = false
+	} else {
+		c.Data.Servers = append(c.Data.Servers, s)
+		m.Message = ServerAdded
+		m.Succeeded = true
+	}
+}
+
+func (c *Config) AddNetwork(m *data.Message) {
+	debug.Ver("Config AddNetwork: %v", m)
+	n := m.Data.(Network)
+
+	// fire result event after function is done
+	defer func() {
+		if m.Succeeded == true {
+			// host module should also check data
+			event.Fire("check-network-added", m)
+		} else {
+			// something went wrong, inform server about that
+			event.Fire("add-network-result", m)
+		}
+	}()
+
+	if e := n.IsSane(c.Data, "mac,port"); e != nil {
+		// something is wrong with specified data
+		m.Message = e.Error()
+		m.Succeeded = false
+	} else {
+		for _, s := range c.Data.Servers {
+			if s.Name == n.Server {
+				s.Networks = append(s.Networks, n)
+				m.Message = NetworkAdded
+				m.Succeeded = true
+				return
+			}
+		}
+		// uhm... no network with this name found
+		m.Succeeded = false
+		m.Message = err.New(ServerNotFound, n.Server).Error()
 	}
 }
 
@@ -488,7 +575,7 @@ func (c *Config) AddHost(m *data.Message) {
 	defer func() {
 		if m.Succeeded == true {
 			// host module should also check data
-			event.Fire("check-host-added", m.Data)
+			event.Fire("check-host-added", m)
 		} else {
 			// something went wrong, inform server about that
 			event.Fire("add-host-result", m)

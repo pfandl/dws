@@ -200,20 +200,50 @@ func main() {
 		debug.Fat(err.Error())
 	}
 
-	h := config.Host{
-		Name: "test",
-		IpV4: config.IpV4{
-			Address: "129.168.1.1",
-			Mac:     "aa:bb:cc:dd:ee:ff",
-		},
-		UtsName: "bla.com",
-		Network: "dws-production",
-	}
-	m := &data.Message{
-		Data:    h,
-		Message: "add-host",
-	}
-	event.Fire(m.Message, m)
+	// test adding server
+	event.Fire(
+		"add-server",
+		&data.Message{
+			Data: config.Server{
+				Name: "test",
+				IpV4: config.IpV4{
+					Port: "8002",
+				},
+			},
+			Message: "add-server",
+		})
+
+	// test adding network
+	event.Fire(
+		"add-network",
+		&data.Message{
+			Data: config.Network{
+				Name: "test",
+				IpV4: config.IpV4{
+					Address: "1.1.1.1",
+					Subnet:  "2.2.2.2",
+				},
+				Server: "dws-test-server",
+				Type:   "backup",
+			},
+			Message: "add-network",
+		})
+
+	// test adding host
+	event.Fire(
+		"add-host",
+		&data.Message{
+			Data: config.Host{
+				Name: "test",
+				IpV4: config.IpV4{
+					Address: "129.168.1.1",
+					Mac:     "aa:bb:cc:dd:ee:ff",
+				},
+				UtsName: "bla.com",
+				Network: "dws-production",
+			},
+			Message: "add-host",
+		})
 
 	// we are done loading, we now can just wait until we
 	// get killed or gracefully stopped via system signals
