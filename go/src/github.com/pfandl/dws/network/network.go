@@ -17,14 +17,12 @@ import (
 var (
 	// events we fire
 	ActiveEvents = []string{
-		"add-network-result",
-		"remove-network-result",
+		"command-result",
 	}
 	// events we are interested in
 	PassiveEvents = []string{
 		"network-available",
-		"check-network-added",
-		"check-network-removed",
+		"check-command",
 	}
 	// errors
 	CannotParseIpAddress = "cannot parse ip address"

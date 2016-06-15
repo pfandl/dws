@@ -12,28 +12,13 @@ import (
 var (
 	// events we fire
 	ActiveEvents = []string{
-		"add-server",
-		"remove-server",
-		"add-backingstore",
-		"remove-backingstore",
-		"add-network",
-		"remove-network",
-		"add-host",
-		"remove-host",
+		"command",
 	}
 	// events we are interested in
 	PassiveEvents = []string{
 		"server-available",
-		"check-server-added",
-		"add-server-result",
-		"check-server-removed",
-		"remove-server-result",
-		"add-backingstore-result",
-		"remove-backingstore-result",
-		"add-network-result",
-		"remove-network-result",
-		"add-host-result",
-		"remove-host-result",
+		"command-result",
+		"check-command",
 	}
 	// errors
 	// messages
@@ -122,6 +107,8 @@ func (c *Server) Event(e string, v interface{}) {
 		c.Available(v.(*config.Server))
 	case "check-server-added":
 		c.Added(v.(*data.Message))
+	case "add-host-result":
+		fallthrough
 	case "add-network-result":
 		fallthrough
 	case "add-server-result":

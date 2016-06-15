@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/pfandl/dws"
+	"github.com/pfandl/dws/backingstore"
 	"github.com/pfandl/dws/config"
 	"github.com/pfandl/dws/data"
 	"github.com/pfandl/dws/debug"
@@ -185,6 +186,7 @@ func main() {
 		module.StopAll()
 	})
 	module.Register(&config.Config{})
+	module.Register(&backingstore.BackingStore{})
 	module.Register(&server.Server{})
 	module.Register(&network.Network{})
 	if err := module.StartAll(); err != nil {
@@ -193,58 +195,68 @@ func main() {
 	if err := module.GetError("config"); err != nil {
 		debug.Fat(err.Error())
 	}
+	if err := module.GetError("backingstore"); err != nil {
+		debug.Fat(err.Error())
+	}
 	if err := module.GetError("server"); err != nil {
 		debug.Fat(err.Error())
 	}
 	if err := module.GetError("network"); err != nil {
 		debug.Fat(err.Error())
 	}
-
-	// test adding server
-	event.Fire(
-		"add-server",
-		&data.Message{
-			Data: config.Server{
-				Name: "test",
-				IpV4: config.IpV4{
-					Port: "8002",
+	event.Fire("command", &data.Message{Message: "get-backingstore-path"})
+	/*
+		// test adding server
+		event.Fire(
+			"add-server",
+			&data.Message{
+				Data: config.Server{
+					Name: "test",
+					IpV4: config.ServerIpV4{
+						IpV4: config.IpV4{
+							Port: "8002",
+						},
+					},
 				},
-			},
-			Message: "add-server",
-		})
+				Message: "add-server",
+			})
 
-	// test adding network
-	event.Fire(
-		"add-network",
-		&data.Message{
-			Data: config.Network{
-				Name: "test",
-				IpV4: config.IpV4{
-					Address: "1.1.1.1",
-					Subnet:  "2.2.2.2",
+		// test adding network
+		event.Fire(
+			"add-network",
+			&data.Message{
+				Data: config.Network{
+					Name: "test",
+					IpV4: config.NetworkIpV4{
+						IpV4: config.IpV4{
+							Address: "1.1.1.1",
+							Subnet:  "2.2.2.2",
+						},
+					},
+					Server: "dws-test-server",
+					Type:   "backup",
 				},
-				Server: "dws-test-server",
-				Type:   "backup",
-			},
-			Message: "add-network",
-		})
+				Message: "add-network",
+			})
 
-	// test adding host
-	event.Fire(
-		"add-host",
-		&data.Message{
-			Data: config.Host{
-				Name: "test",
-				IpV4: config.IpV4{
-					Address: "129.168.1.1",
-					Mac:     "aa:bb:cc:dd:ee:ff",
+		// test adding host
+		event.Fire(
+			"add-host",
+			&data.Message{
+				Data: config.Host{
+					Name: "test",
+					IpV4: config.HostIpV4{
+						IpV4: config.IpV4{
+							Address: "129.168.1.1",
+							Mac:     "aa:bb:cc:dd:ee:ff",
+						},
+					},
+					UtsName: "bla.com",
+					Network: "dws-production",
 				},
-				UtsName: "bla.com",
-				Network: "dws-production",
-			},
-			Message: "add-host",
-		})
-
+				Message: "add-host",
+			})
+	*/
 	// we are done loading, we now can just wait until we
 	// get killed or gracefully stopped via system signals
 

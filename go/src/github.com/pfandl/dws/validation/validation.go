@@ -17,6 +17,7 @@ var (
 	Invalid           = "invalid validation"
 	InvalidSyntax     = "invalid validation syntax"
 	InvalidValue      = "invalid validation value"
+	DataUnvailable    = "data unavailable"
 )
 
 func Validate(v interface{}, ig string, s string) error {
@@ -214,6 +215,7 @@ func Validate(v interface{}, ig string, s string) error {
 		fallthrough
 	case reflect.Struct:
 		vo := reflect.ValueOf(v)
+
 		var l int
 		if to.Kind() == reflect.Slice {
 			l = vo.Len()
@@ -223,12 +225,16 @@ func Validate(v interface{}, ig string, s string) error {
 		// for all fields or slices
 		vs := ""
 		is := ""
+		var igs []string
 		n := ""
+
 		var in interface{}
 		for i := 0; i < l; i++ {
 			if to.Kind() == reflect.Struct {
 				// get the validation tag
 				f := to.Field(i)
+				debug.Ver("%d %v", i, f)
+				debug.Ver("%v", reflect.Zero(to.Field(i).Type) == vo.Field(i))
 				n = f.Name
 				vs = f.Tag.Get("validation")
 				if vs == "" {
@@ -236,10 +242,21 @@ func Validate(v interface{}, ig string, s string) error {
 				}
 				// get the validation ignore tag
 				is = f.Tag.Get("validation-ignore")
+				// joing parent and our ignore tags
+				igs = strings.Split(ig, ",")
+				for _, igns := range strings.Split(is, ",") {
+					igs = append(igs, igns)
+				}
+
 				b := false
 				// check whether we should ignore some validations
-				for _, ign := range strings.Split(ig, ",") {
-					if f.Tag.Get("xml") == ign {
+				for _, ign := range igs {
+					if ign == "" {
+						continue
+					}
+					// just get first value of splitting by ",""
+					// (for getting correct name of "XMLNAME,attr" and such)
+					if strings.Split(f.Tag.Get("xml"), ",")[0] == ign {
 						b = true
 						break
 					}
@@ -251,7 +268,10 @@ func Validate(v interface{}, ig string, s string) error {
 				}
 			}
 
-			debug.Ver("Validate: validating %s for %s", vs, n)
+			// joing parent and our validation ignore tags
+			is = strings.Join(igs, ",")
+
+			debug.Info("Validate: validating %s for %s (%s)", vs, n, to.String())
 			if to.Kind() == reflect.Slice {
 				in = vo.Index(i).Interface()
 			} else {

@@ -38,7 +38,7 @@ type ActiveEvent struct {
 	_activeEvent
 	Listeners  []_passiveEvent
 	Unfinished []uint64
-	Callbacks  []func(string, interface{})
+	Callbacks  []*func(string, interface{})
 	Name       string
 }
 
@@ -62,9 +62,9 @@ func (a *ActiveEvent) UnRegister(p _passiveEvent) error {
 	return err.New(EventNotFound)
 }
 
-func (a *ActiveEvent) RegisterCallback(c func(string, interface{})) error {
+func (a *ActiveEvent) RegisterCallback(c *func(string, interface{})) error {
 	for i := 0; i < len(a.Callbacks); i++ {
-		if &a.Callbacks[i] == &c {
+		if a.Callbacks[i] == c {
 			return err.New(CallbackAlreadyRegistered)
 		}
 	}
@@ -72,9 +72,9 @@ func (a *ActiveEvent) RegisterCallback(c func(string, interface{})) error {
 	return nil
 }
 
-func (a *ActiveEvent) UnRegisterCallback(c func(string, interface{})) error {
+func (a *ActiveEvent) UnRegisterCallback(c *func(string, interface{})) error {
 	for i := 0; i < len(a.Callbacks); i++ {
-		if &a.Callbacks[i] == &c {
+		if a.Callbacks[i] == c {
 			a.Callbacks = append(a.Callbacks[:i], a.Callbacks[i+1:]...)
 			return nil
 		}
@@ -104,17 +104,27 @@ func (a *ActiveEvent) Asynchronous(f func()) {
 
 func (a *ActiveEvent) Fire(v interface{}) {
 	for _, l := range a.Listeners {
+		// IMPORTANT!!!!
+		// cannot use 'l' in asynchronous callback function as it
+		// would be overwritten by the next loop and thus only a
+		// subset of callbacks (or the last one) will be called!
+		ll := l
 		if Asynchronous == true {
-			a.Asynchronous(func() { l.Extinguish(v) })
+			a.Asynchronous(func() { ll.Extinguish(v) })
 		} else {
 			l.Extinguish(v)
 		}
 	}
 	for _, c := range a.Callbacks {
+		// IMPORTANT!!!!
+		// cannot use 'c' in asynchronous callback function as it
+		// would be overwritten by the next loop and thus only a
+		// subset of callbacks (or the last one) will be called!
+		cc := *c
 		if Asynchronous == true {
-			a.Asynchronous(func() { c(a.Name, v) })
+			a.Asynchronous(func() { cc(a.Name, v) })
 		} else {
-			c(a.Name, v)
+			cc(a.Name, v)
 		}
 	}
 }
@@ -146,32 +156,28 @@ func UnRegisterEvent(s string) error {
 
 func RegisterListener(s string, p _passiveEvent) error {
 	if Events[s] != nil {
-		Events[s].Register(p)
-		return nil
+		return Events[s].Register(p)
 	}
 	return err.New(EventNotFound, s)
 }
 
 func UnRegisterListener(s string, p _passiveEvent) error {
 	if Events[s] != nil {
-		Events[s].UnRegister(p)
-		return nil
+		return Events[s].UnRegister(p)
 	}
 	return err.New(EventNotFound, s)
 }
 
 func RegisterCallback(s string, c func(string, interface{})) error {
 	if Events[s] != nil {
-		Events[s].RegisterCallback(c)
-		return nil
+		return Events[s].RegisterCallback(&c)
 	}
 	return err.New(EventNotFound, s)
 }
 
 func UnRegisterCallback(s string, c func(string, interface{})) error {
 	if Events[s] != nil {
-		Events[s].UnRegisterCallback(c)
-		return nil
+		return Events[s].UnRegisterCallback(&c)
 	}
 	return err.New(EventNotFound, s)
 }
@@ -179,6 +185,7 @@ func UnRegisterCallback(s string, c func(string, interface{})) error {
 func Fire(s string, v interface{}) error {
 	if Events[s] != nil {
 		Events[s].Fire(v)
+		return nil
 	}
 	return err.New(EventNotFound, s)
 }
