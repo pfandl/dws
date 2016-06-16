@@ -1,19 +1,27 @@
-<?xml version="1.0" encoding="UTF-8"?>
-  <config>
-    <server>
-      <host>
-        <ipv4>
-          <port>8001</port>
-        </ipv4>
-      </host>
+
+nfig name="dws-development">
+    <server name="dws-test-server">
+      <ipv4>
+        <port>8001</port>
+      </ipv4>
+      <backingstore>
+        <host>
+          <ipv4>
+            <address>127.0.0.1</address>
+            <port>8002</port>
+          </ipv4>
+        </host>
+      </backingstore>
     </server>
-    <backingstore>
+    <backingstore name="DWS Development BTRFS Backing-Store">
       <host>
         <ipv4>
-          <address>192.168.1.129</address>
-          <port>8001</port>
+          <port>8002</port>
         </ipv4>
       </host>
+      <path></path>
+      <type>btrfs</type>
     </backingstore>
   </config>
 </xml>
+
