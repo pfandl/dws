@@ -185,11 +185,15 @@ func (c *Network) Event(e string, v interface{}) {
 	switch e {
 	case "network-available":
 		c.Available(v.(*config.Network))
-	case "check-network-added":
-		c.Added(v.(*data.Message))
+	case "check-command":
+		c.CheckCommand(v.(*data.Message))
 	default:
 		debug.Fat("Network event %s unknown", e)
 	}
+}
+
+func (c *Network) CheckCommand(m *data.Message) {
+	debug.Ver("Network CheckCommand: %v", m)
 }
 
 func (c *Network) Add(n *config.Network) {

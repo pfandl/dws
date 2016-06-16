@@ -224,7 +224,7 @@ func (c *BackingStore) Added(m *data.Message) {
 
 	// fire result event after function is done
 	defer func() {
-		event.Fire("add-backingstore-result", m)
+		event.Fire("command-result", m)
 	}()
 
 	if t, err := c.CreateThread(&s); err != nil {

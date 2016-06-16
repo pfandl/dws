@@ -9,16 +9,17 @@ var (
 	CannotConvertToJson = "cannot convert data to json"
 )
 
-type Encapsulation interface {
+type IsJsonCompatible interface {
 	ToJson() string
 	FromJson(string) error
 }
 
 type Message struct {
-	Encapsulation
+	IsJsonCompatible
 	Succeeded bool
 	Message   string
 	Data      interface{}
+	Interface *interface{}
 }
 
 func (m *Message) ToJson() string {

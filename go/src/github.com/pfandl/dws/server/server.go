@@ -21,6 +21,8 @@ var (
 		"check-command",
 	}
 	// errors
+	CommandHasNoInterface = "command does not contain originating interface"
+	CannotConvertToThread = "cannot convert data to Thread"
 	// messages
 	ServerAdded = "server was added"
 )
@@ -28,6 +30,7 @@ var (
 type Thread struct {
 	Running bool
 	Server  *config.Server
+	Channel chan *data.Message
 }
 
 type Server struct {
@@ -84,14 +87,17 @@ func (c *Thread) Run(l *net.Listener) {
 	c.Running = true
 	for c.Running {
 		debug.Ver("Thread Waiting...()")
-		c, err := (*l).Accept()
+		conn, err := (*l).Accept()
 		if err != nil {
 			debug.Err("Thread connection failed %s", err.Error())
 			continue
 		}
-		debug.Ver("Thread connection established wtih %s", c.RemoteAddr().String())
-		c.Read(b)
-		c.Close()
+		debug.Ver("Thread connection established wtih %s", conn.RemoteAddr().String())
+		conn.Read(b)
+
+		s := <-c.Channel
+		conn.Write([]byte(s.ToJson()))
+		conn.Close()
 	}
 }
 
@@ -105,21 +111,33 @@ func (c *Server) Event(e string, v interface{}) {
 	switch e {
 	case "server-available":
 		c.Available(v.(*config.Server))
-	case "check-server-added":
-		c.Added(v.(*data.Message))
-	case "add-host-result":
-		fallthrough
-	case "add-network-result":
-		fallthrough
-	case "add-server-result":
+	case "check-command":
+		c.CheckCommand(v.(*data.Message))
+	case "command-result":
 		c.Result(v.(*data.Message))
 	default:
 		debug.Fat("Server event %s unknown", e)
 	}
 }
 
+func (c *Server) CheckCommand(m *data.Message) {
+	debug.Ver("Server CheckCommand: %v", m)
+	switch m.Message {
+	case "add-server":
+		c.Added(m)
+	}
+}
+
 func (c *Server) Result(m *data.Message) {
 	debug.Ver("Server Result: %v", m)
+	if m.Interface == nil {
+		debug.Fat(CommandHasNoInterface)
+	}
+	if t, ok := (*m.Interface).(Thread); ok == false {
+		t.Channel <- m
+	} else {
+		debug.Fat(CannotConvertToThread)
+	}
 }
 
 func (c *Server) CreateThread(s *config.Server) (*Thread, error) {
@@ -148,7 +166,7 @@ func (c *Server) Added(m *data.Message) {
 
 	// fire result event after function is done
 	defer func() {
-		event.Fire("add-server-result", m)
+		event.Fire("command-result", m)
 	}()
 
 	if t, err := c.CreateThread(&s); err != nil {
